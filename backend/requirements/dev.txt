@@ -1,0 +1,3 @@
+# 开发环境依赖（SQLite）
+-r base.txt
+# asyncpg 和 oracledb 可选，开发用 SQLite 不需要

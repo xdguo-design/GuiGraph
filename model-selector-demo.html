@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 模型环境选择器 - 演示程序</title>
+    <style>
+        :root {
+            --primary: #1890ff;
+            --primary-light: #e6f7ff;
+            --primary-dark: #096dd9;
+            --success: #52c41a;
+            --warning: #faad14;
+            --danger: #f5222d;
+            --info: #1890ff;
+            --bg: #f0f2f5;
+            --bg-card: #ffffff;
+            --text: #262626;
+            --text-muted: #8c8c8c;
+            --border: #d9d9d9;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 22px; color: var(--primary); }
+        .header-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Environment Switcher */
+        .env-switcher {
+            display: flex;
+            gap: 8px;
+            background: var(--bg);
+            padding: 6px;
+            border-radius: 8px;
+        }
+        .env-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+            color: var(--text-muted);
+        }
+        .env-btn:hover { background: rgba(0,0,0,0.05); }
+        .env-btn.active { background: var(--primary); color: #fff; }
+        .env-btn.dev.active { background: #722ed1; }
+        .env-btn.test.active { background: #1890ff; }
+        .env-btn.prod.active { background: #52c41a; }
+        .env-btn.cost.active { background: #faad14; }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.2s;
+        }
+        .card:hover { box-shadow: var(--shadow-hover); }
+        .card-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .card-title .icon { font-size: 18px; }
+        .card-value { font-size: 28px; font-weight: 600; color: var(--primary); }
+        .card-value.success { color: var(--success); }
+        .card-value.warning { color: var(--warning); }
+        .card-value.danger { color: var(--danger); }
+        .card-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .tab:hover { background: var(--bg); }
+        .tab.active { background: var(--primary-light); color: var(--primary); }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th {
+            background: var(--bg);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+        }
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .data-table tr:hover { background: var(--primary-light); }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tag-success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .tag-warning { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+        .tag-danger { background: #fff1f0; color: #f5222d; border: 1px solid #ffa39e; }
+        .tag-info { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+        .tag-purple { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+
+        /* Model Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+        .flow-step {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 24px;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.2s;
+        }
+        .flow-step.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: 0 2px 8px rgba(24,144,255,0.2);
+        }
+        .flow-arrow { font-size: 24px; color: var(--text-muted); }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .number { color: #b5cea8; }
+        .code-block .type { color: #4ec9b0; }
+
+        /* Console Log */
+        .console-log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .console-log .log-info { color: #4ec9b0; }
+        .console-log .log-success { color: #52c41a; }
+        .console-log .log-warning { color: #faad14; }
+        .console-log .log-error { color: #f5222d; }
+        .console-log .log-timestamp { color: #808080; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            width: 600px;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { font-size: 16px; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Provider Icons */
+        .provider-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .provider-openai { background: #e6f7ff; color: #1890ff; }
+        .provider-anthropic { background: #f9f0ff; color: #722ed1; }
+        .provider-aliyun { background: #fffbe6; color: #fa8c16; }
+        .provider-local { background: #f6ffed; color: #52c41a; }
+
+        /* Scenario Grid */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .scenario-card {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 16px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scenario-card:hover { border-color: var(--primary); }
+        .scenario-card.selected { border-color: var(--primary); background: var(--primary-light); }
+        .scenario-name { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .scenario-model { font-size: 12px; color: var(--text-muted); }
+        .scenario-model strong { color: var(--primary); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-hover);
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.show { display: block; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 16px; }
+            .env-switcher { flex-wrap: wrap; justify-content: center; }
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>🤖 AI 模型环境选择器</h1>
+                <div class="header-subtitle">版本变更管理系统 · 多环境多模型配置演示</div>
+            </div>
+            <div class="env-switcher">
+                <button class="env-btn dev" data-env="dev" onclick="switchEnv('dev')">🟣 Dev</button>
+                <button class="env-btn test" data-env="test" onclick="switchEnv('test')">🔵 Test</button>
+                <button class="env-btn prod active" data-env="prod" onclick="switchEnv('prod')">🟢 Prod</button>
+                <button class="env-btn cost" data-env="cost_saving" onclick="switchEnv('cost_saving')">🟡 成本优先</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-title"><span class="icon">📊</span> 当前环境</div>
+                <div class="card-value" id="currentEnvValue">Prod</div>
+                <div class="card-label">生产环境 · 高能力模型</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="icon">🤖</span> 当前默认模型</div>
+                <div class="card-value" id="currentModelValue">gpt-4-turbo</div>
+                <div class="card-label" id="currentModelProvider">OpenAI · $0.01/1K tokens</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="icon">💰</span> 今日 AI 成本</div>
+                <div class="card-value success" id="todayCostValue">¥12.50</div>
+                <div class="card-label">预算: ¥50.00/天 · 剩余 75%</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="icon">📈</span> 本月 AI 成本</div>
+                <div class="card-value warning" id="monthCostValue">¥285.00</div>
+                <div class="card-label">预算: ¥1000.00/月 · 剩余 71.5%</div>
+            </div>
+        </div>
+
+        <!-- Main Content Tabs -->
+        <div class="section">
+            <div class="section-title"><span class="icon">⚙️</span> 模型配置管理</div>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="models" onclick="switchTab('models')">📋 模型列表</button>
+                <button class="tab" data-tab="scenarios" onclick="switchTab('scenarios')">🔗 场景绑定</button>
+                <button class="tab" data-tab="flow" onclick="switchTab('flow')">🔄 选择流程</button>
+                <button class="tab" data-tab="console" onclick="switchTab('console')">📝 调用日志</button>
+            </div>
+
+            <!-- Tab: 模型列表 -->
+            <div id="tab-models" class="tab-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <div style="display:flex; gap:12px;">
+                        <select class="form-select" style="width:150px;" id="filterProvider" onchange="renderModels()">
+                            <option value="">全部提供商</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="aliyun">阿里云</option>
+                            <option value="local">本地部署</option>
+                        </select>
+                        <select class="form-select" style="width:150px;" id="filterType" onchange="renderModels()">
+                            <option value="">全部类型</option>
+                            <option value="llm">LLM</option>
+                            <option value="vision">Vision</option>
+                            <option value="embedding">Embedding</option>
+                        </select>
+                        <select class="form-select" style="width:150px;" id="filterEnv" onchange="renderModels()">
+                            <option value="">全部环境</option>
+                            <option value="dev">Dev</option>
+                            <option value="test">Test</option>
+                            <option value="prod">Prod</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('modal-add-model')">+ 添加模型</button>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>模型名称</th>
+                            <th>类型</th>
+                            <th>提供商</th>
+                            <th>环境标签</th>
+                            <th>状态</th>
+                            <th>优先级</th>
+                            <th>成本</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modelsTableBody">
+                        <!-- 动态渲染 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tab: 场景绑定 -->
+            <div id="tab-scenarios" class="tab-content" style="display:none;">
+                <div style="margin-bottom:16px;">
+                    <p style="font-size:13px; color:var(--text-muted);">点击场景卡片选择要绑定的模型，然后选择目标环境</p>
+                </div>
+
+                <div class="scenario-grid" id="scenarioGrid">
+                    <!-- 动态渲染 -->
+                </div>
+
+                <div style="margin-top:20px; padding:16px; background:var(--bg); border-radius:8px;">
+                    <div style="font-size:13px; font-weight:600; margin-bottom:12px;">当前选中场景</div>
+                    <div id="selectedScenarioInfo" style="font-size:13px; color:var(--text-muted);">
+                        未选择场景
+                    </div>
+                    <div style="margin-top:12px; display:flex; gap:12px; align-items:center;">
+                        <label style="font-size:13px;">绑定环境:</label>
+                        <select class="form-select" style="width:150px;" id="scenarioBindEnv">
+                            <option value="dev">Dev</option>
+                            <option value="test">Test</option>
+                            <option value="prod" selected>Prod</option>
+                            <option value="all">All</option>
+                            <option value="cost_saving">成本优先</option>
+                        </select>
+                        <select class="form-select" style="width:150px;" id="scenarioBindModel">
+                            <!-- 动态填充 -->
+                        </select>
+                        <button class="btn btn-primary" onclick="bindScenario()">保存绑定</button>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <h4 style="font-size:14px; margin-bottom:12px;">已绑定场景</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>场景名称</th>
+                                <th>绑定模型</th>
+                                <th>环境</th>
+                                <th>优先级</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scenarioBindingsBody">
+                            <!-- 动态渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: 选择流程 -->
+            <div id="tab-flow" class="tab-content" style="display:none;">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <p style="font-size:13px; color:var(--text-muted);">模型选择优先级: 场景绑定 > 环境默认 > 全局默认</p>
+                </div>
+
+                <div class="flow-diagram">
+                    <div class="flow-step active" id="flow-step-1">
+                        <div style="font-size:12px; color:var(--text-muted);">1</div>
+                        <div style="font-size:13px; font-weight:600; margin-top:4px;">场景+环境匹配</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">最精准匹配</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step" id="flow-step-2">
+                        <div style="font-size:12px; color:var(--text-muted);">2</div>
+                        <div style="font-size:13px; font-weight:600; margin-top:4px;">环境默认模型</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">次优匹配</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step" id="flow-step-3">
+                        <div style="font-size:12px; color:var(--text-muted);">3</div>
+                        <div style="font-size:13px; font-weight:600; margin-top:4px;">全局默认模型</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">兜底方案</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step" id="flow-step-4">
+                        <div style="font-size:12px; color:var(--text-muted);">4</div>
+                        <div style="font-size:13px; font-weight:600; margin-top:4px;">抛出异常</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">无可用模型</div>
+                    </div>
+                </div>
+
+                <div style="margin-top:24px; padding:16px; background:var(--bg); border-radius:8px;">
+                    <div style="font-size:14px; font-weight:600; margin-bottom:12px;">🎯 模拟选择测试</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">选择场景</label>
+                            <select class="form-select" id="testScenario">
+                                <option value="document-analysis">document-analysis (文档分析)</option>
+                                <option value="ai-search">ai-search (AI 检索)</option>
+                                <option value="auto-summary">auto-summary (自动总结)</option>
+                                <option value="graph-rag-inference">graph-rag-inference (图谱推理)</option>
+                                <option value="draft-generation">draft-generation (草稿生成)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">选择环境</label>
+                            <select class="form-select" id="testEnv">
+                                <option value="dev">Dev</option>
+                                <option value="test">Test</option>
+                                <option value="prod" selected>Prod</option>
+                                <option value="cost_saving">成本优先</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button class="btn btn-primary" style="width:100%;" onclick="testModelSelection()">测试选择</button>
+                        </div>
+                    </div>
+                    <div id="testResult" style="margin-top:16px; padding:16px; background:var(--bg-card); border-radius:8px; display:none;">
+                        <!-- 测试结果 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: 调用日志 -->
+            <div id="tab-console" class="tab-content" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="font-size:13px; font-weight:600;">📝 AI 调用日志</div>
+                    <button class="btn btn-sm" onclick="clearConsole()">🗑️ 清空</button>
+                </div>
+                <div class="console-log" id="consoleLog">
+                    <div><span class="log-timestamp">[2026-06-04 14:30:01]</span> <span class="log-info">INFO</span> 系统初始化完成，加载 7 个模型配置</div>
+                    <div><span class="log-timestamp">[2026-06-04 14:30:01]</span> <span class="log-info">INFO</span> 当前环境: prod · 默认模型: gpt-4-turbo</div>
+                    <div><span class="log-timestamp">[2026-06-04 14:30:02]</span> <span class="log-success">SUCCESS</span> 场景绑定加载完成: 5 个场景已配置</div>
+                    <div><span class="log-timestamp">[2026-06-04 14:32:15]</span> <span class="log-info">INFO</span> [document-analysis] 选择模型: gpt-4-vision (环境: prod)</div>
+                    <div><span class="log-timestamp">[2026-06-04 14:32:18]</span> <span class="log-info">INFO</span> [ai-search] 选择模型: qwen-plus (环境: all)</div>
+                    <div><span class="log-timestamp">[2026-06-04 14:35:22]</span> <span class="log-warning">WARNING</span> [batch-draft] 使用成本优先模型: qwen-turbo (预算预警: 75%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Budget Section -->
+        <div class="section">
+            <div class="section-title"><span class="icon">💰</span> 成本预算控制</div>
+            
+            <div class="cards-grid" style="margin-bottom:16px;">
+                <div class="card" style="padding:16px;">
+                    <div style="font-size:12px; color:var(--text-muted);">Dev 环境日预算</div>
+                    <div style="font-size:20px; font-weight:600; color:var(--success);">¥5.00</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">已用: ¥0.50 (10%)</div>
+                </div>
+                <div class="card" style="padding:16px;">
+                    <div style="font-size:12px; color:var(--text-muted);">Test 环境日预算</div>
+                    <div style="font-size:20px; font-weight:600; color:var(--success);">¥10.00</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">已用: ¥2.00 (20%)</div>
+                </div>
+                <div class="card" style="padding:16px;">
+                    <div style="font-size:12px; color:var(--text-muted);">Prod 环境日预算</div>
+                    <div style="font-size:20px; font-weight:600; color:var(--warning);">¥50.00</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">已用: ¥12.50 (25%)</div>
+                </div>
+                <div class="card" style="padding:16px;">
+                    <div style="font-size:12px; color:var(--text-muted);">成本优先日预算</div>
+                    <div style="font-size:20px; font-weight:600; color:var(--success);">¥2.00</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">已用: ¥0.30 (15%)</div>
+                </div>
+            </div>
+
+            <div style="font-size:13px; color:var(--text-muted);">
+                <strong>告警规则:</strong> 当日预算使用超过 80% 时发送警告通知，超过 100% 时自动切换到成本优先模型
+            </div>
+        </div>
+
+        <!-- Code Example Section -->
+        <div class="section">
+            <div class="section-title"><span class="icon">💻</span> 代码示例</div>
+            <div class="code-block">
+<span class="comment">// Java - AI 模型选择服务</span>
+<span class="keyword">@Service</span>
+<span class="keyword">public class</span> <span class="type">AiModelSelector</span> {
+
+    <span class="keyword">@Autowired</span>
+    <span class="keyword">private</span> <span class="type">AiModelConfigMapper</span> modelConfigMapper;
+
+    <span class="comment">/**</span>
+<span class="comment">     * 根据场景和环境选择最佳模型</span>
+<span class="comment">     */</span>
+    <span class="keyword">public</span> <span class="type">AiModelConfig</span> <span class="type">selectModel</span>(<span class="type">String</span> scenario) {
+        <span class="comment">// 1. 优先按场景+当前环境查找</span>
+        <span class="type">AiModelConfig</span> config = modelConfigMapper
+            .selectByScenarioAndEnv(scenario, currentEnv);
+        
+        <span class="comment">// 2. 场景未配置时，按环境查找默认模型</span>
+        <span class="keyword">if</span> (config == <span class="keyword">null</span>) {
+            config = modelConfigMapper.selectDefaultByEnv(currentEnv);
+        }
+        
+        <span class="comment">// 3. 兜底：查找全局默认模型</span>
+        <span class="keyword">if</span> (config == <span class="keyword">null</span>) {
+            config = modelConfigMapper.selectGlobalDefault();
+        }
+        
+        <span class="comment">// 4. 记录选择日志</span>
+        logModelSelection(scenario, config);
+        
+        <span class="keyword">return</span> config;
+    }
+}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 添加模型 -->
+    <div class="modal-overlay" id="modal-add-model">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ 添加 AI 模型</h3>
+                <button class="modal-close" onclick="closeModal('modal-add-model')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">模型名称 *</label>
+                        <input type="text" class="form-input" placeholder="如: gpt-4-turbo">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">模型类型 *</label>
+                        <select class="form-select">
+                            <option value="llm">LLM (大语言模型)</option>
+                            <option value="vision">Vision (视觉模型)</option>
+                            <option value="embedding">Embedding (向量化)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">提供商 *</label>
+                        <select class="form-select">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="aliyun">阿里云 (通义千问)</option>
+                            <option value="tencent">腾讯云</option>
+                            <option value="local">本地部署</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">环境标签 *</label>
+                        <select class="form-select">
+                            <option value="dev">Dev (开发)</option>
+                            <option value="test">Test (测试)</option>
+                            <option value="prod">Prod (生产)</option>
+                            <option value="all">All (全环境)</option>
+                            <option value="cost_saving">成本优先</option>
+                            <option value="quality">质量优先</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">API Key (加密存储) *</label>
+                    <input type="password" class="form-input" placeholder="sk-...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">最大输出 Tokens</label>
+                        <input type="number" class="form-input" value="4096">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">温度参数 (0-2)</label>
+                        <input type="number" class="form-input" value="0.7" step="0.1" min="0" max="2">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">优先级</label>
+                        <input type="number" class="form-input" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">成本 (¥/1K tokens)</label>
+                        <input type="number" class="form-input" value="0.01" step="0.001">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <input type="text" class="form-input" placeholder="如: 生产环境主模型">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('modal-add-model')">取消</button>
+                <button class="btn btn-primary" onclick="saveModel()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============ 数据 ============
+        const models = [
+            { id: 1, name: 'gpt-4-turbo', type: 'llm', provider: 'openai', env: 'prod', active: true, priority: 1, cost: 0.01 },
+            { id: 2, name: 'gpt-4-vision', type: 'vision', provider: 'openai', env: 'prod', active: true, priority: 1, cost: 0.02 },
+            { id: 3, name: 'claude-3-opus', type: 'llm', provider: 'anthropic', env: 'prod', active: true, priority: 2, cost: 0.015 },
+            { id: 4, name: 'claude-3-haiku', type: 'llm', provider: 'anthropic', env: 'prod', active: true, priority: 3, cost: 0.00025 },
+            { id: 5, name: 'qwen-max', type: 'llm', provider: 'aliyun', env: 'all', active: true, priority: 1, cost: 0.008 },
+            { id: 6, name: 'qwen-plus', type: 'llm', provider: 'aliyun', env: 'all', active: true, priority: 2, cost: 0.004 },
+            { id: 7, name: 'qwen-turbo', type: 'llm', provider: 'aliyun', env: 'dev', active: true, priority: 1, cost: 0.0005 },
+            { id: 8, name: 'qwen-vl-max', type: 'vision', provider: 'aliyun', env: 'dev', active: true, priority: 1, cost: 0.006 },
+            { id: 9, name: 'text-embedding-3', type: 'embedding', provider: 'openai', env: 'all', active: true, priority: 1, cost: 0.0001 },
+            { id: 10, name: 'local-llama3', type: 'llm', provider: 'local', env: 'dev', active: false, priority: 1, cost: 0 },
+        ];
+
+        const scenarios = [
+            { id: 1, name: 'document-analysis', label: '文档分析', desc: '需要 Vision 能力，解析图片中的表格/图表' },
+            { id: 2, name: 'ai-search', label: 'AI 检索', desc: '自然语言检索，文本语义搜索' },
+            { id: 3, name: 'auto-summary', label: '自动总结', desc: '长文档/变更内容自动生成摘要' },
+            { id: 4, name: 'graph-rag-inference', label: '图谱推理', desc: 'GraphRAG 知识图谱推理分析' },
+            { id: 5, name: 'draft-generation', label: '草稿生成', desc: '变更使用说明书/笔记草稿生成' },
+            { id: 6, name: 'polish', label: '内容润色', desc: '文档/笔记内容润色优化' },
+        ];
+
+        const scenarioBindings = [
+            { scenario: 'document-analysis', model: 'gpt-4-vision', env: 'prod', priority: 1 },
+            { scenario: 'ai-search', model: 'qwen-plus', env: 'all', priority: 1 },
+            { scenario: 'auto-summary', model: 'claude-3-haiku', env: 'prod', priority: 1 },
+            { scenario: 'graph-rag-inference', model: 'gpt-4-turbo', env: 'prod', priority: 1 },
+            { scenario: 'draft-generation', model: 'qwen-max', env: 'all', priority: 1 },
+        ];
+
+        const envDefaults = {
+            dev: { model: 'qwen-turbo', provider: 'aliyun', cost: 0.0005 },
+            test: { model: 'qwen-plus', provider: 'aliyun', cost: 0.004 },
+            prod: { model: 'gpt-4-turbo', provider: 'openai', cost: 0.01 },
+            cost_saving: { model: 'qwen-turbo', provider: 'aliyun', cost: 0.0005 },
+        };
+
+        let currentEnv = 'prod';
+        let selectedScenario = null;
+
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', () => {
+            renderModels();
+            renderScenarios();
+            renderScenarioBindings();
+            updateEnvDisplay();
+        });
+
+        // ============ 环境切换 ============
+        function switchEnv(env) {
+            currentEnv = env;
+            document.querySelectorAll('.env-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.env === env);
+            });
+            updateEnvDisplay();
+            renderModels();
+            showToast(`环境切换至: ${getEnvLabel(env)}`, 'info');
+            addConsoleLog(`环境切换: ${getEnvLabel(env)}`, 'info');
+        }
+
+        function getEnvLabel(env) {
+            const labels = { dev: '🟣 Dev', test: '🔵 Test', prod: '🟢 Prod', cost_saving: '🟡 成本优先' };
+            return labels[env] || env;
+        }
+
+        function updateEnvDisplay() {
+            const envInfo = envDefaults[currentEnv];
+            document.getElementById('currentEnvValue').textContent = currentEnv.toUpperCase();
+            document.getElementById('currentModelValue').textContent = envInfo.model;
+            document.getElementById('currentModelProvider').textContent = 
+                `${envInfo.provider.toUpperCase()} · ¥${envInfo.cost}/1K tokens`;
+        }
+
+        // ============ Tab 切换 ============
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+        }
+
+        // ============ 渲染模型列表 ============
+        function renderModels() {
+            const providerFilter = document.getElementById('filterProvider').value;
+            const typeFilter = document.getElementById('filterType').value;
+            const envFilter = document.getElementById('filterEnv').value;
+
+            const filtered = models.filter(m => {
+                if (providerFilter && m.provider !== providerFilter) return false;
+                if (typeFilter && m.type !== typeFilter) return false;
+                if (envFilter && envFilter !== 'all' && m.env !== envFilter && m.env !== 'all') return false;
+                return true;
+            });
+
+            const providerIcons = { openai: '🔵', anthropic: '🟣', aliyun: '🟠', local: '🟢' };
+            const typeLabels = { llm: 'LLM', vision: 'Vision', embedding: 'Embedding' };
+
+            document.getElementById('modelsTableBody').innerHTML = filtered.map(m => `
+                <tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td><span class="tag tag-info">${typeLabels[m.type]}</span></td>
+                    <td><span class="provider-badge provider-${m.provider}">${providerIcons[m.provider]} ${m.provider}</span></td>
+                    <td><span class="tag ${getEnvTagClass(m.env)}">${getEnvLabel(m.env)}</span></td>
+                    <td><span class="tag ${m.active ? 'tag-success' : 'tag-danger'}">${m.active ? '✅ 启用' : '❌ 禁用'}</span></td>
+                    <td>${m.priority}</td>
+                    <td>¥${m.cost}/1K</td>
+                    <td>
+                        <button class="btn btn-sm" onclick="editModel(${m.id})">✏️</button>
+                        <button class="btn btn-sm" onclick="deleteModel(${m.id})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getEnvTagClass(env) {
+            const classes = { dev: 'tag-purple', test: 'tag-info', prod: 'tag-success', all: 'tag-warning', cost_saving: 'tag-warning' };
+            return classes[env] || 'tag-info';
+        }
+
+        // ============ 渲染场景网格 ============
+        function renderScenarios() {
+            document.getElementById('scenarioGrid').innerHTML = scenarios.map(s => `
+                <div class="scenario-card ${selectedScenario === s.id ? 'selected' : ''}" 
+                     onclick="selectScenario(${s.id}, '${s.name}')">
+                    <div class="scenario-name">${s.label}</div>
+                    <div class="scenario-model">${s.desc}</div>
+                    <div class="scenario-model" style="margin-top:8px;">
+                        当前绑定: <strong>${getBoundModel(s.name)}</strong>
+                    </div>
+                </div>
+            `).join('');
+
+            // 填充模型选择下拉框
+            const modelSelect = document.getElementById('scenarioBindModel');
+            modelSelect.innerHTML = models.filter(m => m.active).map(m => 
+                `<option value="${m.name}">${m.name} (${m.provider})</option>`
+            ).join('');
+        }
+
+        function getBoundModel(scenarioName) {
+            const binding = scenarioBindings.find(b => b.scenario === scenarioName);
+            return binding ? binding.model : '未绑定';
+        }
+
+        function selectScenario(id, name) {
+            selectedScenario = id;
+            const binding = scenarioBindings.find(b => b.scenario === name);
+            document.getElementById('selectedScenarioInfo').innerHTML = `
+                <strong>${name}</strong> · 当前绑定: <span style="color:var(--primary);">${binding ? binding.model : '未绑定'}</span>
+            `;
+            if (binding) {
+                document.getElementById('scenarioBindModel').value = binding.model;
+                document.getElementById('scenarioBindEnv').value = binding.env;
+            }
+            renderScenarios();
+        }
+
+        function renderScenarioBindings() {
+            document.getElementById('scenarioBindingsBody').innerHTML = scenarioBindings.map(b => {
+                const scenario = scenarios.find(s => s.name === b.scenario);
+                return `
+                    <tr>
+                        <td>${scenario ? scenario.label : b.scenario}</td>
+                        <td><strong>${b.model}</strong></td>
+                        <td><span class="tag ${getEnvTagClass(b.env)}">${getEnvLabel(b.env)}</span></td>
+                        <td>${b.priority}</td>
+                        <td><button class="btn btn-sm" onclick="unbindScenario('${b.scenario}')">解除</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function bindScenario() {
+            if (!selectedScenario) {
+                showToast('请先选择一个场景', 'error');
+                return;
+            }
+            const scenario = scenarios.find(s => s.id === selectedScenario);
+            const model = document.getElementById('scenarioBindModel').value;
+            const env = document.getElementById('scenarioBindEnv').value;
+
+            const existingIdx = scenarioBindings.findIndex(b => b.scenario === scenario.name);
+            if (existingIdx >= 0) {
+                scenarioBindings[existingIdx] = { scenario: scenario.name, model, env, priority: 1 };
+            } else {
+                scenarioBindings.push({ scenario: scenario.name, model, env, priority: 1 });
+            }
+
+            renderScenarioBindings();
+            renderScenarios();
+            showToast(`场景 "${scenario.label}" 已绑定模型: ${model}`, 'success');
+            addConsoleLog(`场景绑定: ${scenario.name} → ${model} (环境: ${env})`, 'success');
+        }
+
+        function unbindScenario(scenarioName) {
+            const idx = scenarioBindings.findIndex(b => b.scenario === scenarioName);
+            if (idx >= 0) {
+                scenarioBindings.splice(idx, 1);
+                renderScenarioBindings();
+                renderScenarios();
+                showToast(`已解除场景 "${scenarioName}" 的绑定`, 'info');
+                addConsoleLog(`解除绑定: ${scenarioName}`, 'info');
+            }
+        }
+
+        // ============ 模型选择流程测试 ============
+        function testModelSelection() {
+            const scenario = document.getElementById('testScenario').value;
+            const env = document.getElementById('testEnv').value;
+            const resultDiv = document.getElementById('testResult');
+
+            // 模拟选择流程
+            document.getElementById('flow-step-1').classList.add('active');
+            document.getElementById('flow-step-2').classList.remove('active');
+            document.getElementById('flow-step-3').classList.remove('active');
+            document.getElementById('flow-step-4').classList.remove('active');
+
+            setTimeout(() => {
+                // Step 1: 场景+环境匹配
+                const binding = scenarioBindings.find(b => b.scenario === scenario && (b.env === env || b.env === 'all'));
+                if (binding) {
+                    document.getElementById('flow-step-1').classList.add('active');
+                    resultDiv.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="flex:1;">
+                                <div style="font-size:12px; color:var(--text-muted);">匹配阶段</div>
+                                <div style="font-size:14px; font-weight:600; color:var(--success);">✅ 场景绑定匹配</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">场景 "${scenario}" + 环境 "${env}"</div>
+                            </div>
+                            <div style="flex:1; padding:12px; background:var(--primary-light); border-radius:8px;">
+                                <div style="font-size:12px; color:var(--text-muted);">选中模型</div>
+                                <div style="font-size:18px; font-weight:600; color:var(--primary);">${binding.model}</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">优先级: ${binding.priority}</div>
+                            </div>
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                    addConsoleLog(`[TEST] ${scenario} + ${env} → ${binding.model} (场景绑定匹配)`, 'success');
+                    return;
+                }
+
+                // Step 2: 环境默认
+                document.getElementById('flow-step-1').classList.remove('active');
+                document.getElementById('flow-step-2').classList.add('active');
+                setTimeout(() => {
+                    const defaultModel = envDefaults[env];
+                    if (defaultModel) {
+                        resultDiv.innerHTML = `
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <div style="flex:1;">
+                                    <div style="font-size:12px; color:var(--text-muted);">匹配阶段</div>
+                                    <div style="font-size:14px; font-weight:600; color:var(--warning);">⚠️ 环境默认模型</div>
+                                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">场景未配置，使用环境默认</div>
+                                </div>
+                                <div style="flex:1; padding:12px; background:var(--bg); border-radius:8px;">
+                                    <div style="font-size:12px; color:var(--text-muted);">选中模型</div>
+                                    <div style="font-size:18px; font-weight:600; color:var(--primary);">${defaultModel.model}</div>
+                                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">提供商: ${defaultModel.provider}</div>
+                                </div>
+                            </div>
+                        `;
+                        resultDiv.style.display = 'block';
+                        addConsoleLog(`[TEST] ${scenario} + ${env} → ${defaultModel.model} (环境默认)`, 'info');
+                        return;
+                    }
+
+                    // Step 3: 全局默认
+                    document.getElementById('flow-step-2').classList.remove('active');
+                    document.getElementById('flow-step-3').classList.add('active');
+                    resultDiv.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="flex:1;">
+                                <div style="font-size:12px; color:var(--text-muted);">匹配阶段</div>
+                                <div style="font-size:14px; font-weight:600; color:var(--info);">ℹ️ 全局默认模型</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">场景和环境均未配置，使用全局默认</div>
+                            </div>
+                            <div style="flex:1; padding:12px; background:var(--bg); border-radius:8px;">
+                                <div style="font-size:12px; color:var(--text-muted);">选中模型</div>
+                                <div style="font-size:18px; font-weight:600; color:var(--primary);">gpt-3.5-turbo</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">兜底方案</div>
+                            </div>
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                    addConsoleLog(`[TEST] ${scenario} + ${env} → gpt-3.5-turbo (全局默认)`, 'info');
+                }, 300);
+            }, 300);
+        }
+
+        // ============ Console 日志 ============
+        function addConsoleLog(message, type = 'info') {
+            const consoleLog = document.getElementById('consoleLog');
+            const timestamp = new Date().toLocaleString('zh-CN');
+            const typeClass = `log-${type}`;
+            const typeLabel = type.toUpperCase();
+            
+            const logEntry = `<div><span class="log-timestamp">[${timestamp}]</span> <span class="${typeClass}">${typeLabel}</span> ${message}</div>`;
+            consoleLog.innerHTML += logEntry;
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('consoleLog').innerHTML = 
+                `<div><span class="log-timestamp">[${new Date().toLocaleString('zh-CN')}]</span> <span class="log-info">INFO</span> 日志已清空</div>`;
+        }
+
+        // ============ Modal ============
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function saveModel() {
+            closeModal('modal-add-model');
+            showToast('模型已保存（演示模式，未持久化）', 'success');
+            addConsoleLog('新增模型配置（演示模式）', 'info');
+        }
+
+        function editModel(id) {
+            showToast(`编辑模型 #${id}（演示模式）`, 'info');
+        }
+
+        function deleteModel(id) {
+            if (confirm('确定要删除这个模型吗？')) {
+                showToast(`模型 #${id} 已删除（演示模式）`, 'success');
+                addConsoleLog(`删除模型 #${id}`, 'warning');
+            }
+        }
+
+        // ============ Toast ============
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

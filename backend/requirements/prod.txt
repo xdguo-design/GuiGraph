@@ -1,0 +1,3 @@
+# 生产环境依赖（Oracle）
+-r base.txt
+# oracledb 已包含在 base.txt 中
