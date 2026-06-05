@@ -8,13 +8,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _get_env_file() -> str:
-    """根据 APP_ENV 环境变量确定配置文件。"""
+    """根据 APP_ENV 环境变量确定配置文件（使用绝对路径）。"""
     env = os.getenv("APP_ENV", "dev").lower()
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if env == "prod":
-        return ".env.prod"
-    if env == "test":
-        return ".env.test"
-    return ".env.dev"
+        filename = ".env.prod"
+    elif env == "test":
+        filename = ".env.test"
+    else:
+        filename = ".env.dev"
+    return os.path.join(backend_dir, filename)
 
 
 class Settings(BaseSettings):
@@ -34,7 +37,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-in-production"
 
     # ===== 数据库 =====
-    DATABASE_URL: str = "postgresql+asyncpg://guigraph:guigraph@localhost:5432/guigraph"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./guigraph.db"
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
 

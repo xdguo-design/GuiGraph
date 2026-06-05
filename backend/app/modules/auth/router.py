@@ -10,14 +10,13 @@ from app.modules.auth.schemas import LoginRequest, TokenResponse, WechatQRCodeRe
 router = APIRouter()
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login")
 async def login(body: LoginRequest):
     """用户名密码登录（MD5 加密）。"""
     from app.modules.auth.service import auth_service
 
     user = await auth_service.authenticate_user(body.username, body.password)
     if not user:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",
@@ -27,12 +26,12 @@ async def login(body: LoginRequest):
     access_token = create_access_token({"sub": user["id"], "username": user["username"], "role": user.get("role", "editor")})
     refresh_token = create_refresh_token({"sub": user["id"], "username": user["username"], "role": user.get("role", "editor")})
 
-    return Response.ok(TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        expires_in=7200,
-    ))
+    return Response.ok({
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": 7200,
+    })
 
 
 @router.post("/wechat/qrcode", response_model=WechatQRCodeResponse)

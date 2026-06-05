@@ -42,8 +42,8 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 
-def verify_token(token: str) -> Optional[str]:
-    """验证令牌（校验过期）并返回用户 ID。"""
+def verify_token(token: str) -> Optional[dict]:
+    """验证令牌（校验过期）并返回完整载荷。"""
     try:
         payload = jwt.decode(
             token,
@@ -51,7 +51,7 @@ def verify_token(token: str) -> Optional[str]:
             algorithms=[settings.JWT_ALGORITHM],
         )
         if payload.get("type") in ("access", "refresh"):
-            return payload.get("sub")
+            return payload
         return None
     except JWTError:
         return None

@@ -44,7 +44,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """初始化数据库连接池。"""
+    """初始化数据库连接池并创建表。"""
+    import app.modules.user.models  # noqa: F401
     from app.core.database.base import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

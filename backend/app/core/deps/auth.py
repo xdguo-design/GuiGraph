@@ -17,14 +17,14 @@ async def get_current_user(
 ) -> str:
     """获取当前登录用户 ID（从 Bearer Token 中提取）。"""
     token = credentials.credentials
-    user_id = verify_token(token)
-    if not user_id:
+    payload = verify_token(token)
+    if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的认证令牌，请重新登录",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user_id
+    return payload.get("sub")
 
 
 async def get_current_user_with_role(
@@ -46,7 +46,7 @@ async def get_current_user_with_role(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="权限不足",
         )
-    return payload.get("sub")
+    return payload
 
 
 def check_resource_permission(user_role: str, resource: str, action: str) -> bool:
@@ -57,3 +57,25 @@ def check_resource_permission(user_role: str, resource: str, action: str) -> boo
             detail=f"权限不足: {resource}.{action}",
         )
     return True
+
+
+def check_role(*roles: str):
+    """角色检查依赖工厂。"""
+    async def _check(
+        credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    ) -> str:
+        payload = verify_token(credentials.credentials)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="无效的认证令牌，请重新登录",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        user_role = payload.get("role", "editor")
+        if user_role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="权限不足",
+            )
+        return payload.get("sub")
+    return _check
