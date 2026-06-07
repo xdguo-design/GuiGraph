@@ -38,21 +38,21 @@ class ChangeItemResponse(BaseModel):
     version_id: str
     change_type: str
     content: str
-    effect_scope: Optional[str]
+    effect_scope: Optional[str] = None
     change_reason: str
-    change_reason_detail: Optional[str]
-    related_requirement_no: Optional[str]
-    func_point_ids: Optional[list[str]]
-    img_list: Optional[list[str]]
-    file_ref: Optional[list[str]]
-    impact_tables: Optional[list[str]]
-    impact_apis: Optional[list[str]]
-    related_incidents: Optional[list[str]]
-    rag_doc_id: Optional[str]
+    change_reason_detail: Optional[str] = None
+    related_requirement_no: Optional[str] = None
+    func_point_ids: Optional[list[str]] = None
+    img_list: Optional[list[str]] = None
+    file_ref: Optional[list[str]] = None
+    impact_tables: Optional[list[str]] = None
+    impact_apis: Optional[list[str]] = None
+    related_incidents: Optional[list[str]] = None
+    rag_doc_id: Optional[str] = None
     status: str
     created_by: str
-    created_at: Optional[str]
-    updated_at: Optional[str]
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class ChangeListResponse(BaseModel):

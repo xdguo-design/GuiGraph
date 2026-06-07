@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="business">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>版本变更管理系统 — 测试用例文档 v1.0</title>
+    <style>
+        :root {
+            --theme-primary: #1a5276; --theme-primary-light: #2980b9; --theme-primary-dark: #154360;
+            --theme-bg: #f8f9fa; --theme-bg-card: #ffffff; --theme-text: #2c3e50; --theme-text-muted: #7f8c8d;
+            --theme-border: #d5dbdb; --theme-code-bg: #f4f6f7;
+            --theme-accent: #e74c3c; --theme-success: #27ae60; --theme-warning: #f39c12; --theme-info: #3498db;
+            --theme-p0: #e74c3c; --theme-p1: #f39c12; --theme-p2: #3498db;
+            --nav-bg: #1a5276; --nav-text: #ffffff; --nav-hover: #2980b9;
+            --table-header-bg: #1a5276; --table-header-text: #ffffff; --table-row-hover: #eaf2f8;
+            --shadow: 0 2px 8px rgba(26,82,118,0.1);
+        }
+        [data-theme="tech"] {
+            --theme-primary: #00d4ff; --theme-primary-light: #00b8e6; --theme-primary-dark: #0099cc;
+            --theme-bg: #0a0a0f; --theme-bg-card: #12121a; --theme-text: #e0e0e0; --theme-text-muted: #888899;
+            --theme-border: #2a2a3a; --theme-code-bg: #1a1a2a;
+            --theme-accent: #ff4757; --theme-success: #00ff88; --theme-warning: #ffa502; --theme-info: #00d4ff;
+            --nav-bg: #0a0a0f; --nav-text: #00d4ff; --nav-hover: #00b8e6;
+            --table-header-bg: #1a1a2a; --table-header-text: #00d4ff; --table-row-hover: #1a1a2a;
+        }
+        [data-theme="minimal"] {
+            --theme-primary: #2d3436; --theme-primary-light: #636e72; --theme-primary-dark: #1a1a1a;
+            --theme-bg: #ffffff; --theme-bg-card: #ffffff; --theme-text: #2d3436; --theme-text-muted: #b2bec3;
+            --theme-border: #dfe6e9; --theme-code-bg: #fafafa;
+            --theme-accent: #d63031; --theme-success: #00b894; --theme-warning: #fdcb6e; --theme-info: #0984e3;
+            --nav-bg: #ffffff; --nav-text: #2d3436; --nav-hover: #dfe6e9;
+            --table-header-bg: #2d3436; --table-header-text: #ffffff; --table-row-hover: #f5f6fa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--theme-bg); color: var(--theme-text); line-height: 1.7; transition: all 0.3s ease;
+        }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: var(--nav-bg); color: var(--nav-text); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h1 { font-size: 17px; font-weight: 600; }
+        .sidebar-header .version { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+        .sidebar-header .summary { font-size: 11px; opacity: 0.8; margin-top: 8px; line-height: 1.6; }
+        .nav-section { padding: 12px 0; }
+        .nav-section-title { padding: 6px 20px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; }
+        .nav-item { padding: 8px 20px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .nav-item:hover { background: var(--nav-hover); }
+        .nav-item.active { background: rgba(255,255,255,0.15); border-left: 3px solid var(--theme-primary-light); }
+        .nav-item .icon { font-size: 14px; opacity: 0.7; }
+        .nav-item .count { margin-left: auto; font-size: 10px; opacity: 0.6; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 8px; }
+        .nav-subitem { padding: 6px 20px 6px 44px; font-size: 12px; opacity: 0.7; cursor: pointer; }
+        .nav-subitem:hover { opacity: 1; }
+        .nav-subitem.active { color: var(--theme-primary-light); opacity: 1; }
+        .theme-switcher { position: fixed; bottom: 20px; left: 300px; background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 8px; padding: 10px 14px; box-shadow: var(--shadow); z-index: 200; }
+        .theme-switcher-title { font-size: 11px; color: var(--theme-text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .theme-options { display: flex; gap: 6px; }
+        .theme-btn { width: 28px; height: 28px; border-radius: 5px; border: 2px solid transparent; cursor: pointer; }
+        .theme-btn:hover { transform: scale(1.1); }
+        .theme-btn.active { border-color: var(--theme-primary); }
+        .theme-btn.business { background: linear-gradient(135deg, #1a5276, #2980b9); }
+        .theme-btn.tech { background: linear-gradient(135deg, #0a0a0f, #00d4ff); }
+        .theme-btn.minimal { background: linear-gradient(135deg, #ffffff, #dfe6e9); border: 1px solid #dfe6e9; }
+        .main-content { margin-left: 280px; flex: 1; padding: 32px; max-width: 1280px; }
+        .doc-section { background: var(--theme-bg-card); border-radius: 12px; padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow); scroll-margin-top: 20px; }
+        .section-title { font-size: 22px; font-weight: 600; color: var(--theme-primary); margin-bottom: 8px; padding-bottom: 12px; border-bottom: 2px solid var(--theme-border); display: flex; align-items: center; gap: 10px; }
+        .section-subtitle { font-size: 16px; font-weight: 600; color: var(--theme-text); margin: 24px 0 14px; display: flex; align-items: center; gap: 10px; }
+        .section-subtitle::before { content: ''; width: 4px; height: 18px; background: var(--theme-primary); border-radius: 2px; }
+        .section-text { font-size: 14px; color: var(--theme-text); margin-bottom: 14px; }
+        .section-text b { color: var(--theme-primary); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+        .stat-card { background: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+        .stat-card .stat-icon { width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; flex-shrink: 0; }
+        .stat-card .stat-info { flex: 1; min-width: 0; }
+        .stat-card .stat-value { font-size: 22px; font-weight: 600; color: var(--theme-primary); }
+        .stat-card .stat-label { font-size: 11px; color: var(--theme-text-muted); margin-top: 2px; }
+        .filter-bar { background: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: 8px; padding: 12px 16px; margin: 12px 0 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .filter-group { display: flex; align-items: center; gap: 6px; }
+        .filter-group label { font-size: 12px; color: var(--theme-text-muted); }
+        .filter-group select, .filter-group input { padding: 5px 9px; border: 1px solid var(--theme-border); border-radius: 4px; font-size: 12px; background: var(--theme-bg-card); color: var(--theme-text); }
+        .filter-group input[type="text"] { min-width: 180px; }
+        .filter-result { margin-left: auto; font-size: 12px; color: var(--theme-text-muted); font-weight: 500; }
+        .test-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; }
+        .test-table th { background: var(--table-header-bg); color: var(--table-header-text); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .test-table td { padding: 9px 11px; border-bottom: 1px solid var(--theme-border); vertical-align: top; }
+        .test-table tr:hover { background: var(--table-row-hover); }
+        .col-id { font-family: 'Consolas', monospace; font-weight: 600; color: var(--theme-primary); white-space: nowrap; }
+        .col-steps { line-height: 1.6; }
+        .col-steps ol { padding-left: 18px; margin: 3px 0; }
+        .col-steps li { margin-bottom: 3px; }
+        .col-steps code, code { background: var(--theme-code-bg); padding: 1px 5px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 11.5px; }
+        .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10.5px; font-weight: 500; white-space: nowrap; }
+        .tag-primary { background: var(--theme-primary); color: #fff; }
+        .tag-success { background: var(--theme-success); color: #fff; }
+        .tag-warning { background: var(--theme-warning); color: #fff; }
+        .tag-info { background: var(--theme-info); color: #fff; }
+        .tag-accent { background: var(--theme-accent); color: #fff; }
+        .tag-muted { background: #95a5a6; color: #fff; }
+        .tag-p0 { background: var(--theme-p0); color: #fff; }
+        .tag-p1 { background: var(--theme-p1); color: #fff; }
+        .tag-p2 { background: var(--theme-p2); color: #fff; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+        .card { background: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; }
+        .card-title { font-size: 14px; font-weight: 600; color: var(--theme-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .card-text { font-size: 12.5px; color: var(--theme-text-muted); line-height: 1.6; }
+        .code-block { background: var(--theme-code-bg); border: 1px solid var(--theme-border); border-radius: 6px; padding: 12px 16px; margin: 8px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre; }
+        details { margin: 8px 0; }
+        details summary { cursor: pointer; padding: 8px 12px; background: var(--theme-bg); border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--theme-primary); }
+        details[open] summary { background: var(--theme-primary); color: #fff; }
+        @media (max-width: 1024px) { .sidebar { width: 220px; } .main-content { margin-left: 220px; padding: 20px; } .doc-section { padding: 20px; } .theme-switcher { left: 240px; } }
+        @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 16px; } .theme-switcher { left: 16px; } .card-grid { grid-template-columns: 1fr; } .test-table { font-size: 11.5px; } .test-table th, .test-table td { padding: 6px; } }
+        @media print { .sidebar, .theme-switcher, .filter-bar, .sidebar-search { display: none; } .main-content { margin-left: 0; } .doc-section { box-shadow: none; border: 1px solid #ddd; page-break-after: always; } }
+
+        /* ===== Sidebar Search ===== */
+        .sidebar-search { position: sticky; top: 0; z-index: 15; padding: 10px 16px 12px; background: var(--nav-bg); border-bottom: 1px solid rgba(255,255,255,0.12); }
+        .sidebar-search .search-icon { position: absolute; left: 26px; top: 19px; font-size: 12px; pointer-events: none; opacity: 0.75; }
+        .sidebar-search input { width: 100%; padding: 7px 30px 7px 30px; border: 1px solid rgba(255,255,255,0.18); border-radius: 6px; background: rgba(255,255,255,0.08); color: var(--nav-text); font-size: 13px; outline: none; box-sizing: border-box; transition: border-color .15s, background .15s; }
+        .sidebar-search input::placeholder { color: rgba(255,255,255,0.45); }
+        .sidebar-search input:focus { border-color: var(--theme-primary-light); background: rgba(255,255,255,0.16); }
+        .sidebar-search .search-clear { position: absolute; right: 22px; top: 16px; width: 20px; height: 20px; border: none; background: rgba(255,255,255,0.18); color: var(--nav-text); border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; display: none; align-items: center; justify-content: center; }
+        .sidebar-search .search-clear:hover { background: var(--theme-accent); }
+        .sidebar-search .search-stats { color: rgba(255,255,255,0.55); font-size: 11px; margin-top: 6px; min-height: 14px; }
+        .sidebar-search .search-stats.active { color: var(--theme-warning); }
+        .tc-row-hidden { display: none !important; }
+        .tc-section-hidden { display: none !important; }
+        .nav-item.is-empty .count { color: rgba(255,255,255,0.35) !important; font-style: italic; }
+        .tc-highlight { background: rgba(241, 196, 15, 0.45); color: inherit; padding: 0 2px; border-radius: 2px; font-weight: 600; }
+        [data-theme="minimal"] .sidebar-search input { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.12); }
+        [data-theme="minimal"] .sidebar-search input:focus { background: rgba(0,0,0,0.03); border-color: var(--theme-primary); }
+
+        /* ===== Test Status Button (injected into TC rows) ===== */
+        .tc-id-wrap { display: inline-flex; align-items: center; gap: 6px; }
+        .tc-status-btn { width: 18px; height: 18px; border: 1.5px solid var(--theme-border); border-radius: 4px; background: transparent; cursor: pointer; padding: 0; font-size: 11px; line-height: 1; color: var(--theme-text-muted); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .15s; font-weight: bold; }
+        .tc-status-btn:hover { border-color: var(--theme-primary); transform: scale(1.15); }
+        .tc-status-btn[data-status="pass"] { background: var(--theme-success); border-color: var(--theme-success); color: #fff; }
+        .tc-status-btn[data-status="fail"] { background: var(--theme-accent); border-color: var(--theme-accent); color: #fff; }
+        .tc-status-btn[data-status="block"] { background: var(--theme-warning); border-color: var(--theme-warning); color: #fff; }
+        .tc-status-btn[data-status="skip"] { background: var(--theme-info); border-color: var(--theme-info); color: #fff; }
+        tr.tc-row-pass { background: rgba(39, 174, 96, 0.06) !important; }
+        tr.tc-row-fail { background: rgba(231, 76, 60, 0.08) !important; }
+        tr.tc-row-block { background: rgba(243, 156, 18, 0.08) !important; }
+        tr.tc-row-skip { background: rgba(52, 152, 219, 0.06) !important; opacity: 0.7; }
+        .tc-id-text { font-family: 'Consolas','Monaco',monospace; font-size: 11.5px; }
+
+        /* ===== Progress Panel (sidebar) ===== */
+        .progress-panel { padding: 10px 16px 12px; background: var(--nav-bg); border-bottom: 1px solid rgba(255,255,255,0.12); color: var(--nav-text); }
+        .progress-panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
+        .progress-summary { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+        .progress-num { font-size: 18px; font-weight: 600; }
+        .progress-num span { font-weight: 700; }
+        .progress-pct { font-size: 13px; color: var(--theme-warning); font-weight: 600; }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--theme-success), var(--theme-warning)); transition: width .3s; }
+        .progress-breakdown { display: flex; justify-content: space-between; font-size: 11px; gap: 4px; }
+        .pb-item { padding: 3px 6px; border-radius: 4px; background: rgba(255,255,255,0.08); flex: 1; text-align: center; }
+        .pb-item b { font-weight: 700; margin-left: 2px; }
+        .pb-pass { color: #2ecc71; }
+        .pb-fail { color: #ff6b6b; }
+        .pb-block { color: #f9ca24; }
+        .pb-skip { color: #74b9ff; }
+        .progress-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .prog-btn { flex: 1; padding: 5px 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); color: var(--nav-text); border-radius: 4px; font-size: 11px; cursor: pointer; transition: background .15s; }
+        .prog-btn:hover { background: rgba(255,255,255,0.22); }
+        .prog-btn-danger:hover { background: var(--theme-accent); border-color: var(--theme-accent); }
+        [data-theme="minimal"] .progress-panel { background: var(--theme-bg); color: var(--theme-text); border-bottom-color: var(--theme-border); }
+        [data-theme="minimal"] .progress-panel-title { color: var(--theme-text-muted); }
+        [data-theme="minimal"] .prog-btn { background: var(--theme-bg-card); color: var(--theme-text); border-color: var(--theme-border); }
+        [data-theme="minimal"] .prog-btn:hover { background: var(--theme-primary); color: #fff; border-color: var(--theme-primary); }
+    </style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h1>🧪 测试用例文档</h1>
+        <div class="version">v1.0 | 2026-06-06 | 基于 PRD v1.0</div>
+        <div class="summary">基于 GuiGraph 版本变更管理系统 PRD 编写的完整测试用例集，涵盖 18 个功能模块、230+ 用例。</div>
+    </div>
+    <div class="sidebar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="tcSearch" placeholder="搜索用例 / 标题 / 关键词..." autocomplete="off" spellcheck="false">
+        <button class="search-clear" id="tcSearchClear" title="清空 (Esc)">×</button>
+        <div class="search-stats" id="tcSearchStats">提示: 按 / 聚焦 · Esc 清空</div>
+    </div>
+    <div class="progress-panel">
+        <div class="progress-panel-title">📊 测试进度</div>
+        <div class="progress-summary" id="progressSummary">
+            <div class="progress-num"><span id="progTested">0</span> / <span id="progTotal">0</span></div>
+            <div class="progress-pct" id="progPct">0%</div>
+        </div>
+        <div class="progress-bar"><div class="progress-bar-fill" id="progBarFill" style="width:0%"></div></div>
+        <div class="progress-breakdown" id="progressBreakdown">
+            <span class="pb-item pb-pass" title="通过">✓ <b id="cntPass">0</b></span>
+            <span class="pb-item pb-fail" title="失败">✗ <b id="cntFail">0</b></span>
+            <span class="pb-item pb-block" title="阻塞">! <b id="cntBlock">0</b></span>
+            <span class="pb-item pb-skip" title="跳过">— <b id="cntSkip">0</b></span>
+        </div>
+        <div class="progress-actions">
+            <button id="btnExportProgress" class="prog-btn" title="导出执行结果为 JSON">⤓ 导出</button>
+            <button id="btnResetProgress" class="prog-btn prog-btn-danger" title="清空所有执行状态">↺ 重置</button>
+        </div>
+    </div>
+    <nav class="nav-section">
+        <div class="nav-section-title">概览</div>
+        <div class="nav-item active" data-target="overview"><span class="icon">📊</span> 1. 概览 & 统计</div>
+        <div class="nav-item" data-target="strategy"><span class="icon">🎯</span> 2. 测试策略</div>
+        <div class="nav-item" data-target="env"><span class="icon">⚙️</span> 3. 测试环境</div>
+    </nav>
+    <nav class="nav-section">
+        <div class="nav-section-title">功能测试 (功能+接口+UI+安全)</div>
+        <div class="nav-item" data-target="auth"><span class="icon">🔐</span> 4. 用户认证 <span class="count">24</span></div>
+        <div class="nav-item" data-target="user"><span class="icon">👤</span> 5. 用户中心 <span class="count">25</span></div>
+        <div class="nav-item" data-target="permission"><span class="icon">🛡️</span> 6. 权限矩阵 <span class="count">33</span></div>
+        <div class="nav-item" data-target="org"><span class="icon">🏢</span> 7. 组织管理 <span class="count">9</span></div>
+        <div class="nav-item" data-target="bizline"><span class="icon">📦</span> 8. 业务线/产品/版本 <span class="count">12</span></div>
+        <div class="nav-item" data-target="change"><span class="icon">🔄</span> 9. 变更管理 <span class="count">25</span></div>
+        <div class="nav-item" data-target="image"><span class="icon">📸</span> 10. 图片&附件 <span class="count">16</span></div>
+        <div class="nav-item" data-target="rag"><span class="icon">🧠</span> 11. AI-RAG 检索 <span class="count">13</span></div>
+        <div class="nav-item" data-target="graph"><span class="icon">🕸️</span> 12. GraphRAG 图谱 <span class="count">10</span></div>
+        <div class="nav-item" data-target="sync"><span class="icon">🔁</span> 13. 自动同步 <span class="count">7</span></div>
+        <div class="nav-item" data-target="export"><span class="icon">📤</span> 14. DB 变动导出 <span class="count">6</span></div>
+        <div class="nav-item" data-target="manual"><span class="icon">📝</span> 15. AI 说明书 <span class="count">7</span></div>
+        <div class="nav-item" data-target="docanalyze"><span class="icon">📄</span> 16. 文档自动分析 <span class="count">8</span></div>
+        <div class="nav-item" data-target="knowledge"><span class="icon">📚</span> 17. 知识库笔记 <span class="count">18</span></div>
+        <div class="nav-item" data-target="wiki"><span class="icon">📑</span> 18. Wiki 文档 <span class="count">15</span></div>
+        <div class="nav-item" data-target="timeline"><span class="icon">📅</span> 19. 看板/时间线 <span class="count">14</span></div>
+        <div class="nav-item" data-target="audit"><span class="icon">📋</span> 20. 审计日志 <span class="count">6</span></div>
+    </nav>
+    <nav class="nav-section">
+        <div class="nav-section-title">非功能 & 其他</div>
+        <div class="nav-item" data-target="multidb"><span class="icon">🗄️</span> 21. 多数据库适配 <span class="count">12</span></div>
+        <div class="nav-item" data-target="perf"><span class="icon">⚡</span> 22. 性能测试 <span class="count">8</span></div>
+        <div class="nav-item" data-target="security"><span class="icon">🔒</span> 23. 安全测试 <span class="count">12</span></div>
+        <div class="nav-item" data-target="compat"><span class="icon">🌐</span> 24. 兼容 & 可用性 <span class="count">8</span></div>
+    </nav>
+</aside>
+<div class="theme-switcher">
+    <div class="theme-switcher-title">🎨 主题</div>
+    <div class="theme-options">
+        <button class="theme-btn business active" data-theme="business" title="商务蓝"></button>
+        <button class="theme-btn tech" data-theme="tech" title="科技黑"></button>
+        <button class="theme-btn minimal" data-theme="minimal" title="极简白"></button>
+    </div>
+</div>
+<main class="main-content">
+
+<section id="overview" class="doc-section">
+    <h2 class="section-title">📊 1. 文档概览</h2>
+    <p class="section-text">本测试用例文档基于 <b>GuiGraph 版本变更管理系统 PRD v1.0（2026-06-04）</b> 编写，覆盖 PRD 中 18 个业务模块 + 非功能需求，共设计 <b>230+ 条测试用例</b>。</p>
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-primary);">📋</div><div class="stat-info"><div class="stat-value">230+</div><div class="stat-label">测试用例总数</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-p0);">P0</div><div class="stat-info"><div class="stat-value">68</div><div class="stat-label">高优先级（阻塞）</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-p1);">P1</div><div class="stat-info"><div class="stat-value">112</div><div class="stat-label">中优先级（核心）</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-p2);">P2</div><div class="stat-info"><div class="stat-value">50+</div><div class="stat-label">低优先级（增强）</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-info);">🔌</div><div class="stat-info"><div class="stat-value">62</div><div class="stat-label">API 接口用例</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-success);">🎨</div><div class="stat-info"><div class="stat-value">85</div><div class="stat-label">UI 交互用例</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-warning);">⚡</div><div class="stat-info"><div class="stat-value">28</div><div class="stat-label">性能/安全用例</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--theme-accent);">🔗</div><div class="stat-info"><div class="stat-value">55</div><div class="stat-label">集成场景用例</div></div></div>
+    </div>
+    <h3 class="section-subtitle">1.1 用例编号规则</h3>
+    <div class="code-block"><span class="comment"># 编号格式：TC-{模块缩写}-{序号}</span>
+TC-AUTH-001      <span class="comment"># 认证模块</span>     TC-USER-001      <span class="comment"># 用户中心</span>
+TC-PERM-001      <span class="comment"># 权限矩阵</span>     TC-ORG-001       <span class="comment"># 组织管理</span>
+TC-BIZ-001       <span class="comment"># 业务线</span>       TC-CHG-001       <span class="comment"># 变更管理</span>
+TC-IMG-001       <span class="comment"># 图片附件</span>     TC-AI-001        <span class="comment"># AI 检索</span>
+TC-GRAPH-001     <span class="comment"># 知识图谱</span>     TC-SYNC-001      <span class="comment"># 自动同步</span>
+TC-EXPORT-001    <span class="comment"># DB 导出</span>      TC-MANUAL-001    <span class="comment"># AI 说明书</span>
+TC-DOC-001       <span class="comment"># 文档分析</span>     TC-NOTE-001      <span class="comment"># 知识库笔记</span>
+TC-WIKI-001      <span class="comment"># Wiki 文档</span>    TC-VIEW-001      <span class="comment"># 看板时间线</span>
+TC-AUDIT-001     <span class="comment"># 审计日志</span>     TC-DB-001        <span class="comment"># 多数据库</span>
+TC-PERF-001      <span class="comment"># 性能测试</span>     TC-SEC-001       <span class="comment"># 安全测试</span>
+TC-COMPAT-001    <span class="comment"># 兼容性测试</span></div>
+    <h3 class="section-subtitle">1.2 优先级定义</h3>
+    <table class="test-table">
+        <thead><tr><th>等级</th><th>标识</th><th>说明</th><th>通过要求</th></tr></thead>
+        <tbody>
+            <tr><td><span class="tag tag-p0">P0</span></td><td>阻塞/核心</td><td>主流程、登录、权限、关键数据操作、阻塞性 BUG</td><td>100% 通过（阻塞发布）</td></tr>
+            <tr><td><span class="tag tag-p1">P1</span></td><td>重要</td><td>主要功能、正常路径、必填校验、API 正常响应</td><td>≥ 95% 通过</td></tr>
+            <tr><td><span class="tag tag-p2">P2</span></td><td>次要</td><td>边界值、UI 细节、体验优化、可降级</td><td>≥ 90% 通过</td></tr>
+        </tbody>
+    </table>
+    <h3 class="section-subtitle">1.3 全局筛选器说明</h3>
+    <p class="section-text">每个测试模块顶部均提供 <b>模块 / 优先级 / 类型</b> 三组下拉筛选 + 关键字搜索框。可联动隐藏不关注的用例。打印时自动隐藏筛选栏。</p>
+</section>
+
+<section id="strategy" class="doc-section">
+    <h2 class="section-title">🎯 2. 测试策略</h2>
+    <h3 class="section-subtitle">2.1 测试方法</h3>
+    <div class="card-grid">
+        <div class="card"><div class="card-title">✓ 功能测试（Functional）</div><div class="card-text">逐模块验证 PRD 定义的所有功能点：正向流程、异常分支、字段校验、边界值。</div></div>
+        <div class="card"><div class="card-title">✓ 接口测试（API）</div><div class="card-text">Pytest + httpx 验证 RESTful：状态码、请求/响应 Schema、Header、Token 鉴权、幂等性、错误码。</div></div>
+        <div class="card"><div class="card-title">✓ UI 测试（E2E）</div><div class="card-text">Playwright 模拟用户操作：登录、CRUD、拖拽、上传、视图切换；多浏览器覆盖。</div></div>
+        <div class="card"><div class="card-title">✓ 性能测试（Performance）</div><div class="card-text">Locust 100 QPS 并发；响应时间 P95/P99 监控；图片上传/AI 检索耗时统计。</div></div>
+        <div class="card"><div class="card-title">✓ 安全测试（Security）</div><div class="card-text">SQL 注入、XSS、CSRF、JWT 伪造、越权、文件上传漏洞、密码爆破、敏感信息泄露扫描。</div></div>
+        <div class="card"><div class="card-title">✓ 兼容性测试（Compatibility）</div><div class="card-text">Chrome/Edge/Firefox/Safari、屏幕分辨率、移动端、多数据库方言。</div></div>
+    </div>
+    <h3 class="section-subtitle">2.2 测试阶段 & 准入准出</h3>
+    <div class="code-block"><span class="comment"># 准入标准（开始测试）</span>
+- [x] PRD 已评审签字
+- [x] 接口文档（Swagger）已发布
+- [x] 测试环境部署完成，所有依赖（OP/MinIO/RAGFlow/GraphRAG）连通
+- [x] 冒烟用例 P0 全部通过
+
+<span class="comment"># 准出标准（发布）</span>
+- [x] P0 用例 100% 通过
+- [x] P1 用例 ≥ 95% 通过
+- [x] P2 用例 ≥ 90% 通过
+- [x] 无 P0/P1 级别 BUG 遗留
+- [x] 性能指标满足 PRD 9.1 要求
+- [x] 安全扫描无高危漏洞</div>
+</section>
+
+<section id="env" class="doc-section">
+    <h2 class="section-title">⚙️ 3. 测试环境</h2>
+    <table class="test-table">
+        <thead><tr><th>组件</th><th>测试环境</th><th>生产环境</th><th>备注</th></tr></thead>
+        <tbody>
+            <tr><td>前端</td><td>Vue 3 + Vite (port 10010)</td><td>Nginx 静态部署</td><td>Chrome/Edge 最新版</td></tr>
+            <tr><td>后端</td><td>FastAPI (port 10011)</td><td>Uvicorn+Gunicorn</td><td>Python 3.10+</td></tr>
+            <tr><td>数据库</td><td>SQLite (dev) / PostgreSQL (test)</td><td>PostgreSQL/Oracle/DM</td><td>多方言适配</td></tr>
+            <tr><td>对象存储</td><td>MinIO 本地 (9000/9001)</td><td>MinIO 集群</td><td>桶策略隔离</td></tr>
+            <tr><td>RAG 引擎</td><td>RAGFlow 本地 (9388)</td><td>RAGFlow 集群</td><td>OCR+向量</td></tr>
+            <tr><td>知识图谱</td><td>GraphRAG + Neo4j (可选)</td><td>GraphRAG 集群</td><td>图谱推理</td></tr>
+            <tr><td>消息队列</td><td>Redis (6379)</td><td>Redis 集群</td><td>异步任务</td></tr>
+            <tr><td>数据库迁移</td><td>Flyway</td><td>Flyway</td><td>多库支持</td></tr>
+            <tr><td>测试账号</td><td>admin/admin123（系统管理员）<br>dept_admin/admin123（部门管理员）<br>editor/editor123（编辑者）<br>viewer/viewer123（查看者）<br>auditor/audit123（审计员）</td><td>由系统创建</td><td>5 类角色全覆盖</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="auth" class="doc-section">
+    <h2 class="section-title">🔐 4. 用户认证模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(24 用例)</span></h2>
+    <p class="section-text">对应 PRD §4.3 微信绑定与扫码登录流程、§7.1 认证接口。覆盖账号密码登录、微信扫码登录、JWT Token 管理。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-AUTH-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>账号密码登录-成功</b><br><span class="tag tag-muted">前置</span> 已导入 admin/admin123</td><td class="col-steps"><ol><li>POST /api/v1/auth/login</li><li>Body: <code>{"username":"admin","password":"admin123"}</code></li></ol></td><td>HTTP 200；返回 access_token(2h)+refresh_token(7d)+user；last_login_at 更新</td></tr>
+            <tr><td class="col-id">TC-AUTH-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>账号不存在</b></td><td class="col-steps"><ol><li>POST /api/v1/auth/login</li><li>Body: <code>{"username":"nonexist","password":"any"}</code></li></ol></td><td>HTTP 401；<code>USER_NOT_FOUND</code>；统一提示"账号或密码错误"（不暴露账号是否存在）</td></tr>
+            <tr><td class="col-id">TC-AUTH-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>密码错误</b></td><td class="col-steps"><ol><li>POST /api/v1/auth/login</li><li>Body: <code>{"username":"admin","password":"wrong"}</code></li></ol></td><td>HTTP 401；<code>INVALID_PASSWORD</code>；响应时间恒定（防时序攻击）</td></tr>
+            <tr><td class="col-id">TC-AUTH-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>连续 5 次错误锁定</b></td><td class="col-steps"><ol><li>同账号连续 5 次密码错误</li><li>第 6 次正确密码</li></ol></td><td>返回 <code>ACCOUNT_LOCKED</code>；锁定 30min（可配置）；写审计日志；通知管理员</td></tr>
+            <tr><td class="col-id">TC-AUTH-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>账号被禁用</b><br><span class="tag tag-muted">前置</span> status=disabled</td><td class="col-steps"><ol><li>尝试登录</li></ol></td><td>HTTP 403；<code>ACCOUNT_DISABLED</code>；提示"账号已禁用，请联系管理员"</td></tr>
+            <tr><td class="col-id">TC-AUTH-006</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>登录页-账号密码登录</b></td><td class="col-steps"><ol><li>打开 /login（默认账号 Tab）</li><li>输入 admin/admin123</li><li>点登录</li></ol></td><td>跳转 /dashboard；右上角显示昵称/头像；JWT 写入 localStorage</td></tr>
+            <tr><td class="col-id">TC-AUTH-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>空字段校验</b></td><td class="col-steps"><ol><li>账号或密码为空，点登录</li></ol></td><td>输入框红框 + 提示；不发起请求</td></tr>
+            <tr><td class="col-id">TC-AUTH-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>记住我</b></td><td class="col-steps"><ol><li>勾选"记住我"登录</li><li>关闭浏览器</li><li>重新打开 /login</li></ol></td><td>账号被预填（密码不预填）</td></tr>
+            <tr><td class="col-id">TC-AUTH-009</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>忘记密码链接</b></td><td class="col-steps"><ol><li>点"忘记密码？"</li></ol></td><td>跳转 /reset-password；输入邮箱收到重置链接</td></tr>
+            <tr><td class="col-id">TC-AUTH-010</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>生成微信登录二维码</b></td><td class="col-steps"><ol><li>POST /api/v1/auth/wechat/qrcode</li></ol></td><td>返回 qr_code_url(base64) + qr_code_token(UUID) + expire_in:300</td></tr>
+            <tr><td class="col-id">TC-AUTH-011</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信回调-已绑定用户</b><br><span class="tag tag-muted">前置</span> openid 已在 sys_user</td><td class="col-steps"><ol><li>GET /api/v1/auth/wechat/callback?code=xxx&state=yyy</li></ol></td><td>返回 access_token + user；前端跳转 dashboard</td></tr>
+            <tr><td class="col-id">TC-AUTH-012</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信回调-首次扫码（新用户）</b><br><span class="tag tag-muted">前置</span> 张三账号已导入未绑微信</td><td class="col-steps"><ol><li>首次未绑定微信扫码</li><li>前端弹出"选择账号绑定"页</li><li>选择"张三"完成绑定</li></ol></td><td>openid 写入；后续可扫码直登</td></tr>
+            <tr><td class="col-id">TC-AUTH-013</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>微信回调-CSRF 防护</b></td><td class="col-steps"><ol><li>构造非法 state 参数请求</li></ol></td><td>HTTP 400；<code>INVALID_STATE</code>；不建立 session</td></tr>
+            <tr><td class="col-id">TC-AUTH-014</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信回调-二维码过期</b></td><td class="col-steps"><ol><li>二维码生成 5 分钟后才扫码</li></ol></td><td><code>QRCODE_EXPIRED</code>；提示"二维码已过期，请刷新"</td></tr>
+            <tr><td class="col-id">TC-AUTH-015</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>JWT 刷新 Token</b></td><td class="col-steps"><ol><li>POST /api/v1/auth/refresh</li><li>Body: <code>{"refresh_token":"..."}</code></li></ol></td><td>返回新 access_token(2h)+新 refresh_token(7d)；旧 refresh_token 立即失效（旋转）</td></tr>
+            <tr><td class="col-id">TC-AUTH-016</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>access_token 过期</b></td><td class="col-steps"><ol><li>使用过期 token 请求</li></ol></td><td>HTTP 401；<code>TOKEN_EXPIRED</code>；前端自动 refresh 后重发</td></tr>
+            <tr><td class="col-id">TC-AUTH-017</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>JWT 伪造-签名错误</b></td><td class="col-steps"><ol><li>使用篡改签名的 token</li></ol></td><td>HTTP 401；<code>INVALID_TOKEN</code>；记录审计日志</td></tr>
+            <tr><td class="col-id">TC-AUTH-018</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>JWT 吊销</b></td><td class="col-steps"><ol><li>管理员吊销某用户所有 token</li><li>该用户用旧 token 请求</li></ol></td><td>HTTP 401；<code>TOKEN_REVOKED</code>；需重新登录</td></tr>
+            <tr><td class="col-id">TC-AUTH-019</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>登出</b></td><td class="col-steps"><ol><li>右上角头像 → 退出登录</li></ol></td><td>清除 localStorage；跳转 /login；token 加入短期黑名单</td></tr>
+            <tr><td class="col-id">TC-AUTH-020</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>扫码登录 Tab 切换</b></td><td class="col-steps"><ol><li>点"扫码登录" Tab</li></ol></td><td>切换至二维码视图；二维码每分钟自动刷新</td></tr>
+            <tr><td class="col-id">TC-AUTH-021</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>密码可见性切换</b></td><td class="col-steps"><ol><li>点密码框眼睛图标</li></ol></td><td>明文/密文切换；图标同步变化</td></tr>
+            <tr><td class="col-id">TC-AUTH-022</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>密码强度校验</b></td><td class="col-steps"><ol><li>PUT /api/v1/user/password</li><li>Body: <code>{"old_pwd":"admin123","new_pwd":"123"}</code></li></ol></td><td>HTTP 400；新密码必须 ≥ 8 位 + 大小写+数字</td></tr>
+            <tr><td class="col-id">TC-AUTH-023</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-warning">性能</span></td><td><b>登录接口性能</b></td><td class="col-steps"><ol><li>Locust 100 并发 /api/v1/auth/login 持续 1 分钟</li></ol></td><td>P95 < 500ms；P99 < 800ms；无 5xx</td></tr>
+            <tr><td class="col-id">TC-AUTH-024</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>密码 bcrypt 哈希存储</b></td><td class="col-steps"><ol><li>查 sys_user.password_hash 字段</li></ol></td><td>bcrypt 哈希（$2b$ 开头）；非明文；不可逆</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="user" class="doc-section">
+    <h2 class="section-title">👤 5. 用户中心模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(25 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.7 用户中心、§7.2 用户中心接口、§8.2 UI。覆盖个人信息、头像上传、微信绑定。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-USER-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>获取当前用户信息</b></td><td class="col-steps"><ol><li>GET /api/v1/user/profile</li></ol></td><td>返回 id/username/nickname/avatar_url/email/phone/department/roles</td></tr>
+            <tr><td class="col-id">TC-USER-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>未登录访问</b></td><td class="col-steps"><ol><li>GET /api/v1/user/profile（无 token）</li></ol></td><td>HTTP 401；<code>UNAUTHENTICATED</code></td></tr>
+            <tr><td class="col-id">TC-USER-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>更新昵称</b></td><td class="col-steps"><ol><li>PUT /api/v1/user/profile</li><li>Body: <code>{"nickname":"新昵称"}</code></li></ol></td><td>HTTP 200；昵称更新；下次请求返回新值</td></tr>
+            <tr><td class="col-id">TC-USER-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>邮箱格式校验</b></td><td class="col-steps"><ol><li>Body: <code>{"email":"invalid"}</code></li></ol></td><td>HTTP 400；<code>INVALID_EMAIL_FORMAT</code></td></tr>
+            <tr><td class="col-id">TC-USER-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>邮箱唯一性</b><br><span class="tag tag-muted">前置</span> 另一用户已用 test@x.com</td><td class="col-steps"><ol><li>改邮箱为 test@x.com</li></ol></td><td>HTTP 409；<code>EMAIL_ALREADY_EXISTS</code></td></tr>
+            <tr><td class="col-id">TC-USER-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>头像上传-jpg</b><br><span class="tag tag-muted">前置</span> 2MB jpg</td><td class="col-steps"><ol><li>POST /api/v1/user/avatar（multipart）</li></ol></td><td>HTTP 200；返回 avatar_url + thumbnail_url(100×100) + file_size</td></tr>
+            <tr><td class="col-id">TC-USER-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>头像上传-超 5MB</b><br><span class="tag tag-muted">前置</span> 8MB png</td><td class="col-steps"><ol><li>上传 8MB 文件</li></ol></td><td>HTTP 413；<code>FILE_TOO_LARGE</code></td></tr>
+            <tr><td class="col-id">TC-USER-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>头像上传-格式不支持</b><br><span class="tag tag-muted">前置</span> .gif 图片</td><td class="col-steps"><ol><li>上传 avatar.gif</li></ol></td><td>HTTP 415；<code>UNSUPPORTED_MEDIA_TYPE</code>；仅 jpg/png/webp</td></tr>
+            <tr><td class="col-id">TC-USER-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>缩略图自动生成</b></td><td class="col-steps"><ol><li>上传后查 profile</li></ol></td><td>thumbnail_url 指向 100×100；与原图内容一致</td></tr>
+            <tr><td class="col-id">TC-USER-009a</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>头像 MinIO 路径规范</b></td><td class="col-steps"><ol><li>上传后检查 avatar_url 路径</li></ol></td><td>路径格式：/user/{userId}/avatar/{timestamp}.png；桶=biz-{code}</td></tr>
+            <tr><td class="col-id">TC-USER-009b</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-info">接口</span></td><td><b>头像旧文件清理</b><br><span class="tag tag-muted">前置</span> 上传新头像</td><td class="col-steps"><ol><li>7 天后查 MinIO</li></ol></td><td>旧头像标记为可清理；定时任务删除</td></tr>
+            <tr><td class="col-id">TC-USER-010</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信绑定</b><br><span class="tag tag-muted">前置</span> 未绑定</td><td class="col-steps"><ol><li>POST /api/v1/user/bind-wechat</li><li>Body: <code>{"code":"xxx"}</code></li></ol></td><td>HTTP 200；wechat_openid/unionid 写入；login_method='both'</td></tr>
+            <tr><td class="col-id">TC-USER-011</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信换绑（同 openid）</b></td><td class="col-steps"><ol><li>已绑定的 openid 再次绑定</li></ol></td><td>HTTP 409；<code>WECHAT_ALREADY_BOUND</code></td></tr>
+            <tr><td class="col-id">TC-USER-012</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信解绑</b><br><span class="tag tag-muted">前置</span> 有密码</td><td class="col-steps"><ol><li>POST /api/v1/user/unbind-wechat</li></ol></td><td>HTTP 200；openid 清空；login_method='password'</td></tr>
+            <tr><td class="col-id">TC-USER-013</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>微信解绑-无密码账号禁止</b><br><span class="tag tag-muted">前置</span> 仅微信登录</td><td class="col-steps"><ol><li>尝试解绑</li></ol></td><td>HTTP 400；<code>CANNOT_UNBIND_ONLY_AUTH</code></td></tr>
+            <tr><td class="col-id">TC-USER-014</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>修改密码</b></td><td class="col-steps"><ol><li>PUT /api/v1/user/password</li><li>Body: <code>{"old_pwd":"admin123","new_pwd":"NewPass123"}</code></li></ol></td><td>HTTP 200；bcrypt 重哈希；旧密码失效；其他设备登出</td></tr>
+            <tr><td class="col-id">TC-USER-015</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户列表-分页筛选</b></td><td class="col-steps"><ol><li>GET /api/v1/users?page=1&size=20&department_id=10&keyword=张</li></ol></td><td>返回 total+list；命中筛选条件</td></tr>
+            <tr><td class="col-id">TC-USER-016</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>管理员创建用户</b></td><td class="col-steps"><ol><li>POST /api/v1/users</li><li>Body: <code>{"username":"newuser","password":"Init123456","email":"new@x.com","department_id":1,"role_ids":[3]}</code></li></ol></td><td>HTTP 201；初始密码 Init123456；首次登录必须修改</td></tr>
+            <tr><td class="col-id">TC-USER-017</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户名唯一性</b><br><span class="tag tag-muted">前置</span> admin 存在</td><td class="col-steps"><ol><li>再建 admin</li></ol></td><td>HTTP 409；<code>USERNAME_ALREADY_EXISTS</code></td></tr>
+            <tr><td class="col-id">TC-USER-018</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>重置用户密码</b></td><td class="col-steps"><ol><li>POST /api/v1/users/{id}/reset-password</li></ol></td><td>返回临时密码；下次登录强制修改</td></tr>
+            <tr><td class="col-id">TC-USER-019</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户禁用/启用</b></td><td class="col-steps"><ol><li>PUT /api/v1/users/{id}</li><li>Body: <code>{"status":"disabled"}</code></li></ol></td><td>状态变更；token 立即失效</td></tr>
+            <tr><td class="col-id">TC-USER-020</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>分配角色</b></td><td class="col-steps"><ol><li>PUT /api/v1/users/{id}/roles</li><li>Body: <code>{"role_ids":[1,3]}</code></li></ol></td><td>用户拥有多角色（并集权限）</td></tr>
+            <tr><td class="col-id">TC-USER-021</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户软删除</b></td><td class="col-steps"><ol><li>DELETE /api/v1/users/{id}</li></ol></td><td>HTTP 200；is_deleted=1；列表不显示</td></tr>
+            <tr><td class="col-id">TC-USER-022</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>用户中心-信息展示</b></td><td class="col-steps"><ol><li>点右上角头像 → 个人中心</li></ol></td><td>展示头像、昵称、账号、邮箱、手机、部门、角色标签</td></tr>
+            <tr><td class="col-id">TC-USER-023</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>头像上传交互</b></td><td class="col-steps"><ol><li>点头像 → 选本地 jpg</li><li>前端展示剪裁</li><li>确认上传</li></ol></td><td>头像立即更新；进度条显示</td></tr>
+            <tr><td class="col-id">TC-USER-024</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>微信绑定交互</b></td><td class="col-steps"><ol><li>未绑定状态点"绑定微信"</li><li>弹二维码 → 扫码授权</li></ol></td><td>绑定成功；按钮变"解绑"；状态绿色</td></tr>
+            <tr><td class="col-id">TC-USER-025</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户导出</b></td><td class="col-steps"><ol><li>GET /api/v1/users/export?format=xlsx</li></ol></td><td>下载 Excel；含所有筛选后用户</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="permission" class="doc-section">
+    <h2 class="section-title">🛡️ 6. 权限矩阵模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(33 用例)</span></h2>
+    <p class="section-text">对应 PRD §3.3 细粒度权限矩阵。5 类角色 × 21 项功能点 + 12 个补充权限用例 = 33 条 P0 用例。</p>
+    <h3 class="section-subtitle">6.1 角色 × 功能权限矩阵</h3>
+    <table class="test-table">
+        <thead><tr><th>功能点</th><th>系统管理员</th><th>部门管理员</th><th>编辑者</th><th>查看者</th><th>审计员</th><th>用例 ID</th></tr></thead>
+        <tbody>
+            <tr><td>查看变更列表</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>TC-PERM-001</td></tr>
+            <tr><td>查看功能点时间线</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>TC-PERM-002</td></tr>
+            <tr><td>创建变更申请</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>TC-PERM-003</td></tr>
+            <tr><td>编辑自己的变更</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>TC-PERM-004</td></tr>
+            <tr><td>编辑他人的变更</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-005</td></tr>
+            <tr><td>上传图片附件</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✓</td><td>TC-PERM-006</td></tr>
+            <tr><td>审批变更</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-007</td></tr>
+            <tr><td>管理本部门成员</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-008</td></tr>
+            <tr><td>AI 检索（跨部门）</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✓</td><td>TC-PERM-009</td></tr>
+            <tr><td>查看知识图谱</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>TC-PERM-010</td></tr>
+            <tr><td>导出 DB 变更记录</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✓</td><td>TC-PERM-011</td></tr>
+            <tr><td>AI 生成变更说明书</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>TC-PERM-012</td></tr>
+            <tr><td>查看审计日志</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td><td>TC-PERM-013</td></tr>
+            <tr><td>自定义头像</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>TC-PERM-014</td></tr>
+            <tr><td>微信登录绑定</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>TC-PERM-015</td></tr>
+            <tr><td>MinIO 桶管理</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-016</td></tr>
+            <tr><td>多数据库配置</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-017</td></tr>
+            <tr><td>AI 语言模型管理</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-018</td></tr>
+            <tr><td>AI 图片模型管理</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-019</td></tr>
+            <tr><td>Skill 管理</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-020</td></tr>
+            <tr><td>MCP 管理</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>TC-PERM-021</td></tr>
+        </tbody>
+    </table>
+    <h3 class="section-subtitle">6.2 详细用例</h3>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-PERM-022</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>越权-查看者创建变更</b><br><span class="tag tag-muted">前置</span> viewer 登录</td><td class="col-steps"><ol><li>POST /api/v1/changes</li></ol></td><td>HTTP 403；<code>PERMISSION_DENIED</code>；UI 不显示"新建"按钮</td></tr>
+            <tr><td class="col-id">TC-PERM-023</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>越权-编辑者改他人变更</b></td><td class="col-steps"><ol><li>A 用 editor 改 B 的 draft</li></ol></td><td>HTTP 403；<code>NOT_OWNER</code></td></tr>
+            <tr><td class="col-id">TC-PERM-024</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>越权-查看者导出</b></td><td class="col-steps"><ol><li>GET /api/v1/changes/export</li></ol></td><td>HTTP 403；<code>EXPORT_DENIED</code></td></tr>
+            <tr><td class="col-id">TC-PERM-025</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>越权-编辑者访问管理控制台</b></td><td class="col-steps"><ol><li>GET /api/v1/admin/minio/buckets</li></ol></td><td>HTTP 403；前端 /admin 路由拦截</td></tr>
+            <tr><td class="col-id">TC-PERM-026</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>数据隔离-跨业务线</b><br><span class="tag tag-muted">前置</span> 部门管理员仅"支付"</td><td class="col-steps"><ol><li>GET /api/v1/changes?business_line_id=结算</li></ol></td><td>HTTP 403；<code>BUSINESS_LINE_FORBIDDEN</code></td></tr>
+            <tr><td class="col-id">TC-PERM-027</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>越权-审计员修改数据</b></td><td class="col-steps"><ol><li>审计员 POST /api/v1/changes</li></ol></td><td>HTTP 403；<code>READ_ONLY_ROLE</code></td></tr>
+            <tr><td class="col-id">TC-PERM-028</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-accent">安全</span></td><td><b>权限继承-子部门</b></td><td class="col-steps"><ol><li>A 在"研发部-后端团队"</li><li>查看者继承部门权限</li></ol></td><td>能看研发部数据，不能看其他部门</td></tr>
+            <tr><td class="col-id">TC-PERM-029</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>权限变更-实时生效</b></td><td class="col-steps"><ol><li>A 从编辑者降为查看者</li><li>A 当前 session 继续操作</li></ol></td><td>下次请求权限降级（≤30s）</td></tr>
+            <tr><td class="col-id">TC-PERM-030</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>角色-API 层校验</b></td><td class="col-steps"><ol><li>21 项功能 × 5 角色 = 105 断言</li></ol></td><td>全部通过</td></tr>
+            <tr><td class="col-id">TC-PERM-031</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-primary">UI</span></td><td><b>权限-前端按钮显隐</b></td><td class="col-steps"><ol><li>查看者登录</li><li>检查操作按钮</li></ol></td><td>无权限按钮不显示；菜单项过滤</td></tr>
+            <tr><td class="col-id">TC-PERM-032</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>多角色-权限取并集</b><br><span class="tag tag-muted">前置</span> editor+auditor</td><td class="col-steps"><ol><li>测"查看审计"+"创建变更"</li></ol></td><td>两个权限都生效</td></tr>
+            <tr><td class="col-id">TC-PERM-033</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>MinIO 桶级 Policy</b><br><span class="tag tag-muted">前置</span> 不同业务线桶名不同</td><td class="col-steps"><ol><li>A 属支付业务线</li><li>访问结算桶</li></ol></td><td>MinIO 403；前端不显示该桶图片</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="org" class="doc-section">
+    <h2 class="section-title">🏢 7. 组织管理模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(9 用例)</span></h2>
+    <p class="section-text">对应 PRD §3.2 组织结构：4 层公司→部门→团队→用户。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-ORG-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建部门</b></td><td class="col-steps"><ol><li>POST /api/v1/organizations</li><li>Body: <code>{"name":"研发部","parent_id":1,"type":"department"}</code></li></ol></td><td>HTTP 201；自动计算 level=2</td></tr>
+            <tr><td class="col-id">TC-ORG-002</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>部门层级-最多 4 层</b></td><td class="col-steps"><ol><li>尝试建第 5 层</li></ol></td><td>HTTP 400；<code>MAX_LEVEL_EXCEEDED</code></td></tr>
+            <tr><td class="col-id">TC-ORG-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>部门树查询</b></td><td class="col-steps"><ol><li>GET /api/v1/organizations/tree?root_id=1</li></ol></td><td>嵌套 JSON：公司→部门→团队→用户</td></tr>
+            <tr><td class="col-id">TC-ORG-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>删除部门-有子节点禁止</b></td><td class="col-steps"><ol><li>删除"研发部"（其下有团队）</li></ol></td><td>HTTP 409；<code>ORG_HAS_CHILDREN</code></td></tr>
+            <tr><td class="col-id">TC-ORG-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户调岗</b></td><td class="col-steps"><ol><li>PUT /api/v1/users/{id}/department</li><li>Body: <code>{"department_id":20}</code></li></ol></td><td>部门变更；权限重算</td></tr>
+            <tr><td class="col-id">TC-ORG-006</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>部门负责人</b></td><td class="col-steps"><ol><li>PUT /api/v1/organizations/{id}</li><li>Body: <code>{"leader_id":5}</code></li></ol></td><td>自动获"部门管理员"角色</td></tr>
+            <tr><td class="col-id">TC-ORG-007</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>组织架构图渲染</b></td><td class="col-steps"><ol><li>进入 /organization</li></ol></td><td>树形展示；点击展开/收起</td></tr>
+            <tr><td class="col-id">TC-ORG-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>部门下用户列表</b></td><td class="col-steps"><ol><li>GET /api/v1/organizations/{id}/members</li></ol></td><td>返回该部门（含子部门递归）所有用户</td></tr>
+            <tr><td class="col-id">TC-ORG-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>批量导入用户</b></td><td class="col-steps"><ol><li>POST /api/v1/users/import（上传 xlsx）</li></ol></td><td>返回成功 N 条、失败 M 条 + 错误明细</td></tr>
+        </tbody>
+    </table>
+</section>
+<section id="bizline" class="doc-section">
+    <h2 class="section-title">📦 8. 业务线/产品/版本模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(12 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.1 业务线/产品/版本管理。基于 OP Portfolio/Project/Milestone 三层结构扩展。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-BIZ-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建业务线</b></td><td class="col-steps"><ol><li>POST /api/v1/business-lines</li><li>Body: <code>{"name":"支付业务线","code":"pay","owner_id":1,"minio_bucket":"biz-pay"}</code></li></ol></td><td>HTTP 201；minio_bucket 自动创建</td></tr>
+            <tr><td class="col-id">TC-BIZ-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>业务线编码唯一性</b><br><span class="tag tag-muted">前置</span> code=pay 已存在</td><td class="col-steps"><ol><li>再次创建 code=pay</li></ol></td><td>HTTP 409；<code>CODE_ALREADY_EXISTS</code></td></tr>
+            <tr><td class="col-id">TC-BIZ-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>上下游业务线关联</b></td><td class="col-steps"><ol><li>PUT /api/v1/business-lines/{id}</li><li>Body: <code>{"upstream_lines":[2,3],"downstream_lines":[4]}</code></li></ol></td><td>图谱生成 (BizLine)-[依赖]->(BizLine) 边</td></tr>
+            <tr><td class="col-id">TC-BIZ-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建产品</b></td><td class="col-steps"><ol><li>POST /api/v1/products</li><li>Body: <code>{"business_line_id":1,"name":"医保结算","db_type":"mysql","db_url":"jdbc:mysql://...","db_username":"user","db_password":"pwd","flyway_enabled":true}</code></li></ol></td><td>HTTP 201；密码 AES256 加密</td></tr>
+            <tr><td class="col-id">TC-BIZ-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>DB 连接测试</b></td><td class="col-steps"><ol><li>POST /api/v1/products/test-connection</li></ol></td><td>HTTP 200；返回 DB 版本号</td></tr>
+            <tr><td class="col-id">TC-BIZ-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>多数据库类型校验</b></td><td class="col-steps"><ol><li>db_type: mysql/pg/oracle/mssql/dm</li></ol></td><td>5 种全部支持；驱动可加载</td></tr>
+            <tr><td class="col-id">TC-BIZ-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建版本</b></td><td class="col-steps"><ol><li>POST /api/v1/versions</li><li>Body: <code>{"product_id":1,"version_no":"v2.3.1","type":"minor","plan_date":"2026-06-15"}</code></li></ol></td><td>HTTP 201；status=draft；RAGFlow 知识库自动创建</td></tr>
+            <tr><td class="col-id">TC-BIZ-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>版本号唯一性（同产品）</b></td><td class="col-steps"><ol><li>P 下已存在 v2.3.1，再创建</li></ol></td><td>HTTP 409；<code>VERSION_DUPLICATE</code></td></tr>
+            <tr><td class="col-id">TC-BIZ-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>版本类型枚举</b></td><td class="col-steps"><ol><li>type="feature"（非法）</li></ol></td><td>HTTP 400；仅 major/minor/hotfix</td></tr>
+            <tr><td class="col-id">TC-BIZ-010</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>回滚方案必填</b></td><td class="col-steps"><ol><li>approved 时 rollback_plan 为空</li></ol></td><td>HTTP 400；<code>ROLLBACK_PLAN_REQUIRED</code></td></tr>
+            <tr><td class="col-id">TC-BIZ-011</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>版本状态流转</b></td><td class="col-steps"><ol><li>draft → approved → released → rolled_back</li></ol></td><td>按合法路径流转；非法路径 400</td></tr>
+            <tr><td class="col-id">TC-BIZ-012</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>三级树展示</b></td><td class="col-steps"><ol><li>进入 /change-management 结构页</li></ol></td><td>树形展示；可展开/折叠</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="change" class="doc-section">
+    <h2 class="section-title">🔄 9. 变更管理模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(25 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.2 变更清单管理。核心模块：CRUD、审批、状态流转、影响范围、关联关系。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-CHG-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建-必填校验</b></td><td class="col-steps"><ol><li>缺 version_id/change_type/content/change_reason</li></ol></td><td>HTTP 400；<code>FIELD_REQUIRED</code></td></tr>
+            <tr><td class="col-id">TC-CHG-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建-正常</b></td><td class="col-steps"><ol><li>完整字段提交（DB/API/Config/Code/Infra 任一）</li></ol></td><td>HTTP 201；status=draft</td></tr>
+            <tr><td class="col-id">TC-CHG-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>变更类型枚举</b></td><td class="col-steps"><ol><li>change_type="SQL"（非法）</li></ol></td><td>HTTP 400；<code>INVALID_CHANGE_TYPE</code></td></tr>
+            <tr><td class="col-id">TC-CHG-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>变更原因枚举</b></td><td class="col-steps"><ol><li>6 个值：需求变更/BUG修复/性能优化/合规要求/技术债务/其他</li></ol></td><td>非法值 → 400</td></tr>
+            <tr><td class="col-id">TC-CHG-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>需求号格式</b></td><td class="col-steps"><ol><li>"INVALID" vs "REQ-2026-05-003"</li></ol></td><td>正则 ^REQ-\d{4}-\d{2}-\d{3}$</td></tr>
+            <tr><td class="col-id">TC-CHG-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>关联功能点</b></td><td class="col-steps"><ol><li>func_point_ids: [1,2,3]</li></ol></td><td>关联成功；时间线可见</td></tr>
+            <tr><td class="col-id">TC-CHG-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>编辑-仅 draft</b><br><span class="tag tag-muted">前置</span> status=approved</td><td class="col-steps"><ol><li>PUT /api/v1/changes/{id}</li></ol></td><td>HTTP 409；<code>CANNOT_EDIT_NON_DRAFT</code></td></tr>
+            <tr><td class="col-id">TC-CHG-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>编辑他人变更-无权限</b></td><td class="col-steps"><ol><li>B 改 A 的 draft</li></ol></td><td>HTTP 403；<code>NOT_OWNER</code></td></tr>
+            <tr><td class="col-id">TC-CHG-009</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>审批-通过</b><br><span class="tag tag-muted">前置</span> 业务线负责人</td><td class="col-steps"><ol><li>POST /api/v1/changes/{id}/approve</li><li>Body: <code>{"decision":"approved","comment":"确认"}</code></li></ol></td><td>状态 draft→approved；写审批历史</td></tr>
+            <tr><td class="col-id">TC-CHG-010</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>审批-拒绝</b></td><td class="col-steps"><ol><li>decision="rejected"（comment 必填）</li></ol></td><td>状态 → rejected；通知创建人</td></tr>
+            <tr><td class="col-id">TC-CHG-011</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>非业务线负责人审批</b></td><td class="col-steps"><ol><li>跨业务线审批</li></ol></td><td>HTTP 403；<code>BUSINESS_LINE_FORBIDDEN</code></td></tr>
+            <tr><td class="col-id">TC-CHG-012</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>发布变更</b></td><td class="col-steps"><ol><li>POST /api/v1/changes/{id}/release</li></ol></td><td>approved→released；release_date 自动；触发 RAG 入库</td></tr>
+            <tr><td class="col-id">TC-CHG-013</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>变更回滚</b></td><td class="col-steps"><ol><li>POST /api/v1/changes/{id}/rollback</li><li>Body: <code>{"reason":"线上事故"}</code></li></ol></td><td>released→rolled_back</td></tr>
+            <tr><td class="col-id">TC-CHG-014</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>列表-多维筛选</b></td><td class="col-steps"><ol><li>version_id+change_type+change_reason+func_point_id+page+size</li></ol></td><td>精确匹配；total 准确</td></tr>
+            <tr><td class="col-id">TC-CHG-015</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>列表-排序</b></td><td class="col-steps"><ol><li>sort=created_at_desc/asc/status</li></ol></td><td>按指定字段排序</td></tr>
+            <tr><td class="col-id">TC-CHG-016</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>变更详情</b></td><td class="col-steps"><ol><li>GET /api/v1/changes/{id}</li></ol></td><td>完整对象：images/impact_tables/impact_apis/related_changes/rag_doc_id</td></tr>
+            <tr><td class="col-id">TC-CHG-017</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>删除-仅 draft</b><br><span class="tag tag-muted">前置</span> status≠draft</td><td class="col-steps"><ol><li>DELETE /api/v1/changes/{id}</li></ol></td><td>HTTP 409；<code>CANNOT_DELETE_NON_DRAFT</code></td></tr>
+            <tr><td class="col-id">TC-CHG-018</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>GraphRAG 推断影响表</b><br><span class="tag tag-muted">前置</span> content 含表名</td><td class="col-steps"><ol><li>"修改 t_settle_result 表" → 异步 GraphRAG</li></ol></td><td>impact_tables=["t_settle_result"]；confidence≥0.85</td></tr>
+            <tr><td class="col-id">TC-CHG-019</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>关联历史故障</b></td><td class="col-steps"><ol><li>related_incidents: [INC-001, INC-002]</li></ol></td><td>故障关联；显示链接</td></tr>
+            <tr><td class="col-id">TC-CHG-020</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>功能点时间线</b></td><td class="col-steps"><ol><li>GET /api/v1/function-points/{code}/timeline</li></ol></td><td>按时间倒序；含图集</td></tr>
+            <tr><td class="col-id">TC-CHG-021</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>列表-筛选器</b></td><td class="col-steps"><ol><li>在 /changes 选择版本/类型/原因下拉</li></ol></td><td>列表实时刷新；显示已选条件</td></tr>
+            <tr><td class="col-id">TC-CHG-022</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>详情-图片预览</b></td><td class="col-steps"><ol><li>点缩略图</li></ol></td><td>弹大图（MinIO 签名 URL 30min）；支持旋转/缩放</td></tr>
+            <tr><td class="col-id">TC-CHG-023</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>详情-AI 影响展示</b></td><td class="col-steps"><ol><li>详情页右侧 AI 分析区</li></ol></td><td>显示 GraphRAG 推断的关联模块、表、接口</td></tr>
+            <tr><td class="col-id">TC-CHG-024</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>批量审批</b></td><td class="col-steps"><ol><li>POST /api/v1/changes/batch-approve</li><li>Body: <code>{"ids":[1,2,3]}</code></li></ol></td><td>返回成功/失败明细</td></tr>
+            <tr><td class="col-id">TC-CHG-025</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>变更导出 Excel</b></td><td class="col-steps"><ol><li>GET /api/v1/changes/export?format=xlsx</li></ol></td><td>下载 xlsx；含所有变更字段</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="image" class="doc-section">
+    <h2 class="section-title">📸 10. 图片&附件模块（MinIO 集成） <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(16 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.3 图片&附件管理。所有图片/附件统一存 MinIO，桶策略按业务线隔离。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-IMG-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>单张上传</b></td><td class="col-steps"><ol><li>POST /api/v1/attachments/upload</li><li>file=img.jpg, biz_type=change, biz_id=100</li></ol></td><td>返回 minio_url/path/file_id；异步推送 RAGFlow</td></tr>
+            <tr><td class="col-id">TC-IMG-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>多张上传</b></td><td class="col-steps"><ol><li>同接口上传 5 张</li></ol></td><td>5 条 biz_attach_file 记录</td></tr>
+            <tr><td class="col-id">TC-IMG-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>超 10MB 拒绝</b></td><td class="col-steps"><ol><li>上传 15MB</li></ol></td><td>HTTP 413；<code>FILE_TOO_LARGE</code></td></tr>
+            <tr><td class="col-id">TC-IMG-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>非图片格式</b></td><td class="col-steps"><ol><li>上传 .exe</li></ol></td><td>HTTP 415；白名单：jpg/png/webp/gif/pdf/xlsx/docx</td></tr>
+            <tr><td class="col-id">TC-IMG-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>MinIO 路径规范</b></td><td class="col-steps"><ol><li>version 100, biz_type=change</li></ol></td><td>/version/100/img/{uuid}.jpg；桶=biz-{code}</td></tr>
+            <tr><td class="col-id">TC-IMG-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>签名 URL 预览</b></td><td class="col-steps"><ol><li>GET /api/v1/attachments/{id}/preview</li></ol></td><td>30 分钟有效；记录访问审计</td></tr>
+            <tr><td class="col-id">TC-IMG-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>签名 URL 过期</b></td><td class="col-steps"><ol><li>31 分钟后访问</li></ol></td><td>MinIO 403 SignatureDoesNotMatch</td></tr>
+            <tr><td class="col-id">TC-IMG-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>删除-仅作者/管理员</b></td><td class="col-steps"><ol><li>DELETE /api/v1/attachments/{id}</li></ol></td><td>MinIO 删；DB 软删；他人 → 403</td></tr>
+            <tr><td class="col-id">TC-IMG-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>OCR 异步触发</b><br><span class="tag tag-muted">前置</span> RAGFlow</td><td class="col-steps"><ol><li>上传 1 分钟后查 rag_doc_id</li></ol></td><td>RAGFlow 返回 OCR；向量入库</td></tr>
+            <tr><td class="col-id">TC-IMG-010</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>桶策略隔离</b><br><span class="tag tag-muted">前置</span> A 属支付</td><td class="col-steps"><ol><li>访问 biz-settle</li></ol></td><td>MinIO 403；前端不显示</td></tr>
+            <tr><td class="col-id">TC-IMG-011</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>拖拽上传</b></td><td class="col-steps"><ol><li>拖图片入变更编辑页</li></ol></td><td>缩略图+进度条；自动入 img_list</td></tr>
+            <tr><td class="col-id">TC-IMG-012</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>剪裁/旋转</b></td><td class="col-steps"><ol><li>点图片 → 编辑器 → 旋转 90°</li></ol></td><td>编辑后覆盖原图</td></tr>
+            <tr><td class="col-id">TC-IMG-013</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>附件下载</b></td><td class="col-steps"><ol><li>上传 design.docx</li><li>GET /download</li></ol></td><td>下载原文件；含 Content-Disposition</td></tr>
+            <tr><td class="col-id">TC-IMG-014</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>MIME 检测-伪后缀</b></td><td class="col-steps"><ol><li>.exe 改后缀为 .jpg</li></ol></td><td>magic number 二次校验拒绝</td></tr>
+            <tr><td class="col-id">TC-IMG-015</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>缩略图自动生成</b></td><td class="col-steps"><ol><li>上传 5MB 大图</li></ol></td><td>200×200 缩略图存 MinIO</td></tr>
+            <tr><td class="col-id">TC-IMG-016</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-warning">性能</span></td><td><b>上传性能</b></td><td class="col-steps"><ol><li>10MB 图片</li></ol></td><td>P95 < 5s</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="rag" class="doc-section">
+    <h2 class="section-title">🧠 11. AI-RAG 智能检索模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(13 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.4 AI-RAG 智能检索。基于 RAGFlow 多模态检索（文本+图片+OCR）。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-AI-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>文本检索-正常</b><br><span class="tag tag-muted">前置</span> ≥10 条变更</td><td class="col-steps"><ol><li>POST /api/v1/ai/search</li><li>Body: <code>{"query":"结算表修改","limit":10}</code></li></ol></td><td>≥1 条 ChangeItem；按 score 降序</td></tr>
+            <tr><td class="col-id">TC-AI-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>图片检索</b></td><td class="col-steps"><ol><li>Body: <code>{"query":"医保结算","image_url":"http://minio/xxx.jpg"}</code></li></ol></td><td>图片+关联变更+关联版本</td></tr>
+            <tr><td class="col-id">TC-AI-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>以图搜图</b><br><span class="tag tag-muted">前置</span> ≥3 张相似 ER 图</td><td class="col-steps"><ol><li>上传 ER 图，查询相似</li></ol></td><td>≥3 张相似图（cosine>0.7）</td></tr>
+            <tr><td class="col-id">TC-AI-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>故障检索</b></td><td class="col-steps"><ol><li>query="支付超时 类似故障"</li></ol></td><td>返回历史故障+解决方案</td></tr>
+            <tr><td class="col-id">TC-AI-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>结果类型分类</b></td><td class="col-steps"><ol><li>查 results[].type</li></ol></td><td>type 必为 change/image/incident/note/wiki_doc</td></tr>
+            <tr><td class="col-id">TC-AI-006</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>检索筛选</b></td><td class="col-steps"><ol><li>filters: <code>{"business_line_id":1,"change_type":["DB","API"]}</code></li></ol></td><td>仅返回指定类型变更</td></tr>
+            <tr><td class="col-id">TC-AI-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>跨部门检索权限</b><br><span class="tag tag-muted">前置</span> viewer 登录</td><td class="col-steps"><ol><li>查询其他业务线数据</li></ol></td><td>仅返回本部门；权限过滤</td></tr>
+            <tr><td class="col-id">TC-AI-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>检索空结果</b></td><td class="col-steps"><ol><li>query="xyz123 完全不存在"</li></ol></td><td>HTTP 200；results=[]；不报错</td></tr>
+            <tr><td class="col-id">TC-AI-009</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>检索参数校验</b></td><td class="col-steps"><ol><li>query>500 字符 或 limit>100</li></ol></td><td>HTTP 400；<code>PARAM_OUT_OF_RANGE</code></td></tr>
+            <tr><td class="col-id">TC-AI-010</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>检索反馈</b></td><td class="col-steps"><ol><li>POST /search/{log_id}/feedback</li><li>Body: <code>{"rating":"good"}</code></li></ol></td><td>写反馈表；用于优化模型</td></tr>
+            <tr><td class="col-id">TC-AI-011</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>AI 检索页 UI</b></td><td class="col-steps"><ol><li>输入查询 → 搜索</li></ol></td><td>结果分卡片；高亮匹配片段</td></tr>
+            <tr><td class="col-id">TC-AI-012</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-warning">性能</span></td><td><b>AI 检索性能</b></td><td class="col-steps"><ol><li>Locust 50 并发</li></ol></td><td>P95 < 3s；P99 < 5s</td></tr>
+            <tr><td class="col-id">TC-AI-013</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>OCR 准确率</b><br><span class="tag tag-muted">前置</span> 10 张清晰截图</td><td class="col-steps"><ol><li>上传查 RAGFlow OCR</li></ol></td><td>准确率 > 85%</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="graph" class="doc-section">
+    <h2 class="section-title">🕸️ 12. GraphRAG 知识图谱模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(10 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.5 GraphRAG 知识图谱。构建业务-数据表-接口-故障图谱，变更影响自动推理。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-GRAPH-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>影响分析-表变更</b><br><span class="tag tag-muted">前置</span> 图谱已构建</td><td class="col-steps"><ol><li>POST /api/v1/ai/impact-analysis</li><li>Body: <code>{"table_name":"t_user"}</code></li></ol></td><td>返回 affected_tables/apis/functions/confidence</td></tr>
+            <tr><td class="col-id">TC-GRAPH-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>影响分析-API 变更</b></td><td class="col-steps"><ol><li>Body: <code>{"api_path":"/api/settle/calculate"}</code></li></ol></td><td>返回关联表/调用方 API/依赖该接口的变更</td></tr>
+            <tr><td class="col-id">TC-GRAPH-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>节点关联查询</b></td><td class="col-steps"><ol><li>GET /api/v1/graph/nodes/Table/15/relations</li></ol></td><td>返回所有关系（正向+反向）</td></tr>
+            <tr><td class="col-id">TC-GRAPH-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>图谱可视化数据</b></td><td class="col-steps"><ol><li>GET /visualize?center_node_type=Table&center_node_id=15&depth=2</li></ol></td><td>返回 nodes[]+edges[]；depth≤3</td></tr>
+            <tr><td class="col-id">TC-GRAPH-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>9 种节点类型</b></td><td class="col-steps"><ol><li>BusinessLine/Product/Version/ChangeItem/Table/API/FunctionPoint/Incident/Image</li></ol></td><td>全部在 graph_relation 中</td></tr>
+            <tr><td class="col-id">TC-GRAPH-006</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>置信度过滤</b></td><td class="col-steps"><ol><li>filter: <code>{"min_confidence":0.7}</code></li></ol></td><td>仅返回 confidence≥0.7</td></tr>
+            <tr><td class="col-id">TC-GRAPH-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>图谱可视化渲染</b></td><td class="col-steps"><ol><li>进入 /graph → 选中心节点+深度</li></ol></td><td>D3/Cytoscape 渲染；可拖拽</td></tr>
+            <tr><td class="col-id">TC-GRAPH-008</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>影响路径高亮</b></td><td class="col-steps"><ol><li>选起始→目标节点 → 查看路径</li></ol></td><td>路径红高亮；其他半透明</td></tr>
+            <tr><td class="col-id">TC-GRAPH-009</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>图谱自动构建</b><br><span class="tag tag-muted">前置</span> 创建变更后</td><td class="col-steps"><ol><li>创建 DB 类变更影响 t_x</li><li>查 graph_relation</li></ol></td><td>自动生成 (ChangeItem)-[影响]->(Table) 边</td></tr>
+            <tr><td class="col-id">TC-GRAPH-010</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>故障-变更关联</b></td><td class="col-steps"><ol><li>录入 INC-001 关联 CHG-100</li></ol></td><td>双向边 (ChangeItem)-[关联]->(Incident)+(Incident)-[解决于]->(ChangeItem)</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="sync" class="doc-section">
+    <h2 class="section-title">🔁 13. 自动同步模块（Flyway + 配置中心） <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(7 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.6 自动同步。Flyway DB 变更和 Nacos/Apollo 配置变更自动同步至变更清单。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-SYNC-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>Flyway 同步-DDL 新增表</b><br><span class="tag tag-muted">前置</span> flyway_enabled=true</td><td class="col-steps"><ol><li>执行 V1001__add_table.sql</li><li>Flyway 回调钩子触发</li></ol></td><td>自动创建 change_item，type=DB，impact_tables=[t_test]</td></tr>
+            <tr><td class="col-id">TC-SYNC-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>Flyway 同步-DML 数据迁移</b></td><td class="col-steps"><ol><li>执行 V1002__data_migration.sql</li></ol></td><td>创建变更 type=DB，content=数据迁移</td></tr>
+            <tr><td class="col-id">TC-SYNC-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>同步失败重试</b><br><span class="tag tag-muted">前置</span> GraphRAG 不可用</td><td class="col-steps"><ol><li>Flyway 执行后图谱 API 异常</li></ol></td><td>变更创建成功；图谱任务重试 3 次后成功</td></tr>
+            <tr><td class="col-id">TC-SYNC-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>Nacos 配置变更同步</b><br><span class="tag tag-muted">前置</span> Nacos 集成</td><td class="col-steps"><ol><li>在 Nacos 修改配置项</li></ol></td><td>创建 change_item，type=Config，content="X 从 A 改为 B"</td></tr>
+            <tr><td class="col-id">TC-SYNC-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>同步任务去重</b></td><td class="col-steps"><ol><li>同 SQL 重复回调</li></ol></td><td>幂等：不会创建重复变更</td></tr>
+            <tr><td class="col-id">TC-SYNC-006</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-info">接口</span></td><td><b>同步任务管理</b></td><td class="col-steps"><ol><li>GET /api/v1/sync/tasks?status=pending</li></ol></td><td>查看待处理任务；可手动重试/取消</td></tr>
+            <tr><td class="col-id">TC-SYNC-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>同步开关-按产品</b></td><td class="col-steps"><ol><li>flyway_enabled=false</li><li>执行 SQL 不触发</li></ol></td><td>不创建变更条目</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="export" class="doc-section">
+    <h2 class="section-title">📤 14. DB 变动导出模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(6 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.8 DB 变动导出。导出 DB 变更记录为 Excel/CSV/Markdown。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-EXPORT-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 Excel</b></td><td class="col-steps"><ol><li>GET /api/v1/changes/export?format=xlsx&version_id=10</li></ol></td><td>下载 xlsx；含所有变更字段</td></tr>
+            <tr><td class="col-id">TC-EXPORT-002</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 CSV</b></td><td class="col-steps"><ol><li>GET ...?format=csv</li></ol></td><td>下载 csv；UTF-8 BOM 兼容 Excel</td></tr>
+            <tr><td class="col-id">TC-EXPORT-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>按时间范围</b></td><td class="col-steps"><ol><li>?start_date=2026-01-01&end_date=2026-06-01</li></ol></td><td>仅导出时间范围内变更</td></tr>
+            <tr><td class="col-id">TC-EXPORT-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>多筛选组合</b></td><td class="col-steps"><ol><li>?version_id&change_type&change_reason&business_line_id</li></ol></td><td>AND 关系精确导出</td></tr>
+            <tr><td class="col-id">TC-EXPORT-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出字段配置</b></td><td class="col-steps"><ol><li>?fields=id,change_type,content,status</li></ol></td><td>按需导出指定列</td></tr>
+            <tr><td class="col-id">TC-EXPORT-006</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>导出页 UI</b></td><td class="col-steps"><ol><li>进入 /export → 选筛选项 → 导出</li></ol></td><td>显示进度；完成后自动下载</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="manual" class="doc-section">
+    <h2 class="section-title">📝 15. AI 变更使用说明书模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(7 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.9 AI 生成变更使用说明书。基于变更内容自动生成结构化说明书，支持导出 Markdown/PDF。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-MANUAL-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>生成说明书-正常</b><br><span class="tag tag-muted">前置</span> AI 模型可用</td><td class="col-steps"><ol><li>POST /api/v1/ai/generate-manual</li><li>Body: <code>{"change_item_id":100}</code></li></ol></td><td>返回 Markdown；7 段模板</td></tr>
+            <tr><td class="col-id">TC-MANUAL-002</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>模型切换</b></td><td class="col-steps"><ol><li>Body: <code>{"model":"deepseek-v3","change_item_id":100}</code></li></ol></td><td>使用指定模型</td></tr>
+            <tr><td class="col-id">TC-MANUAL-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>说明书编辑</b></td><td class="col-steps"><ol><li>PUT /api/v1/manuals/{id}</li></ol></td><td>编辑后保存；保留 AI 原始版本</td></tr>
+            <tr><td class="col-id">TC-MANUAL-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 PDF</b></td><td class="col-steps"><ol><li>GET /api/v1/manuals/{id}/export/pdf</li></ol></td><td>下载 PDF；含样式</td></tr>
+            <tr><td class="col-id">TC-MANUAL-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 Markdown</b></td><td class="col-steps"><ol><li>GET /api/v1/manuals/{id}/export/md</li></ol></td><td>下载 .md</td></tr>
+            <tr><td class="col-id">TC-MANUAL-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 限流</b></td><td class="col-steps"><ol><li>同用户 1 分钟生成 100 次</li></ol></td><td>触发限流；429</td></tr>
+            <tr><td class="col-id">TC-MANUAL-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 失败降级</b><br><span class="tag tag-muted">前置</span> LLM 不可用</td><td class="col-steps"><ol><li>调用 AI 失败</li></ol></td><td>返回可编辑空白模板；不报错</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="docanalyze" class="doc-section">
+    <h2 class="section-title">📄 16. 文档自动分析模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(8 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.10 文档自动分析。上传需求/设计/测试文档，AI 提取变更点。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-DOC-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>需求文档解析</b></td><td class="col-steps"><ol><li>POST /api/v1/ai/analyze-doc（PRD.pdf）</li></ol></td><td>返回 5 个候选变更点</td></tr>
+            <tr><td class="col-id">TC-DOC-002</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>设计文档解析</b></td><td class="col-steps"><ol><li>上传 design.docx（ER 图+API 定义）</li></ol></td><td>提取表结构+API 变更</td></tr>
+            <tr><td class="col-id">TC-DOC-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>测试报告解析</b></td><td class="col-steps"><ol><li>上传 test_report.xlsx</li></ol></td><td>提取 BUG 列表→变更条目</td></tr>
+            <tr><td class="col-id">TC-DOC-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>确认变更点</b></td><td class="col-steps"><ol><li>POST /confirm-changes</li><li>Body: <code>{"selected_ids":[1,2,3]}</code></li></ol></td><td>创建 3 条 change_item</td></tr>
+            <tr><td class="col-id">TC-DOC-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 对话澄清</b></td><td class="col-steps"><ol><li>POST /clarify</li><li>Body: <code>{"draft_id":1,"answer":"两者都有"}</code></li></ol></td><td>AI 更新 draft 字段</td></tr>
+            <tr><td class="col-id">TC-DOC-006</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>混合模式交互</b></td><td class="col-steps"><ol><li>确认清晰项+对话澄清</li></ol></td><td>最终生成一致变更</td></tr>
+            <tr><td class="col-id">TC-DOC-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>支持文档类型</b></td><td class="col-steps"><ol><li>pdf/docx/xlsx/md/txt/sql/diff</li></ol></td><td>7 种格式全部解析</td></tr>
+            <tr><td class="col-id">TC-DOC-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>解析失败</b><br><span class="tag tag-muted">前置</span> 损坏的 PDF</td><td class="col-steps"><ol><li>上传损坏文件</li></ol></td><td>HTTP 400；提示文件解析失败</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="knowledge" class="doc-section">
+    <h2 class="section-title">📚 17. 知识库笔记模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(18 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.11 知识库笔记。知识库 CRUD + 笔记 CRUD + AI 辅助 + 版本 + 评论 + 点赞 + 双向关联。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-NOTE-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>知识库 CRUD</b></td><td class="col-steps"><ol><li>POST/GET/PUT/DELETE /api/v1/knowledge-bases</li></ol></td><td>创建/列表/更新/归档/删除全部正常</td></tr>
+            <tr><td class="col-id">TC-NOTE-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>知识库权限</b></td><td class="col-steps"><ol><li>read_roles/write_roles 字段生效</li></ol></td><td>无角色用户看不到；只读用户不能编辑</td></tr>
+            <tr><td class="col-id">TC-NOTE-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>笔记创建-富文本</b></td><td class="col-steps"><ol><li>POST /api/v1/notes</li><li>Body: <code>{"knowledge_base_id":1,"title":"...","content_md":"# H1\n## H2","tags":["故障复盘"]}</code></li></ol></td><td>HTTP 201；自动渲染 content_html</td></tr>
+            <tr><td class="col-id">TC-NOTE-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>子笔记</b></td><td class="col-steps"><ol><li>Body: <code>{"parent_note_id":10}</code></li></ol></td><td>笔记树形结构；查询子笔记列表</td></tr>
+            <tr><td class="col-id">TC-NOTE-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>笔记编辑-自动版本</b></td><td class="col-steps"><ol><li>PUT /api/v1/notes/{id}</li></ol></td><td>更新 content；自动创建 knowledge_note_version 记录</td></tr>
+            <tr><td class="col-id">TC-NOTE-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>笔记版本列表</b></td><td class="col-steps"><ol><li>GET /api/v1/notes/{id}/versions</li></ol></td><td>返回时间倒序版本列表</td></tr>
+            <tr><td class="col-id">TC-NOTE-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>版本对比 diff</b></td><td class="col-steps"><ol><li>GET /api/v1/notes/{id}/versions/{v1}/diff?v2=...</li></ol></td><td>返回两版本 Markdown 差异（行级）</td></tr>
+            <tr><td class="col-id">TC-NOTE-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>版本回滚</b></td><td class="col-steps"><ol><li>POST /rollback</li><li>Body: <code>{"target_version":3}</code></li></ol></td><td>当前 content 替换为 v3；新增 v(current+1) 记录</td></tr>
+            <tr><td class="col-id">TC-NOTE-009</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 生成草稿</b></td><td class="col-steps"><ol><li>POST /ai/generate</li><li>Body: <code>{"source_type":"change","source_id":100,"template":"incident"}</code></li></ol></td><td>基于变更内容生成故障复盘模板</td></tr>
+            <tr><td class="col-id">TC-NOTE-010</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 润色</b></td><td class="col-steps"><ol><li>POST /ai/polish</li></ol></td><td>优化语法/表达；返回润色后内容</td></tr>
+            <tr><td class="col-id">TC-NOTE-011</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 总结</b></td><td class="col-steps"><ol><li>POST /ai/summarize</li></ol></td><td>长笔记生成 ≤200 字摘要</td></tr>
+            <tr><td class="col-id">TC-NOTE-012</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>笔记评论+@提及</b></td><td class="col-steps"><ol><li>POST /comments</li><li>Body: <code>{"content":"@张三 看下","mentioned_users":[2]}</code></li></ol></td><td>通知被提及用户；评论入库</td></tr>
+            <tr><td class="col-id">TC-NOTE-013</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-info">接口</span></td><td><b>点赞/取消</b></td><td class="col-steps"><ol><li>POST /like（toggle）</li></ol></td><td>like_count 增减；记录点赞用户</td></tr>
+            <tr><td class="col-id">TC-NOTE-014</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>标签筛选</b></td><td class="col-steps"><ol><li>GET /notes?tag=故障复盘&knowledge_base_id=1</li></ol></td><td>返回匹配标签的笔记</td></tr>
+            <tr><td class="col-id">TC-NOTE-015</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>全文搜索</b></td><td class="col-steps"><ol><li>GET /notes/search?q=结算</li></ol></td><td>命中含"结算"关键字的笔记</td></tr>
+            <tr><td class="col-id">TC-NOTE-016</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>双向关联变更</b></td><td class="col-steps"><ol><li>POST /associate</li><li>Body: <code>{"type":"change","id":100}</code></li></ol></td><td>笔记关联变更；变更页也显示该笔记</td></tr>
+            <tr><td class="col-id">TC-NOTE-017</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>笔记编辑器</b></td><td class="col-steps"><ol><li>在 /notes/{id} 切换编辑模式</li></ol></td><td>富文本/Markdown 切换；图片拖拽；30s 自动保存</td></tr>
+            <tr><td class="col-id">TC-NOTE-018</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>代码高亮/公式/Mermaid</b></td><td class="col-steps"><ol><li>写 ```python / $LaTeX$ / ```mermaid</li></ol></td><td>代码高亮；公式渲染；流程图渲染</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="wiki" class="doc-section">
+    <h2 class="section-title">📑 18. Wiki 结构化文档模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(15 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.12 Wiki 结构化文档。Wiki 空间 + 多级文档树 + 双向链接 + 版本 + 导出。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-WIKI-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>Wiki 空间 CRUD</b></td><td class="col-steps"><ol><li>POST/GET/PUT/DELETE /api/v1/wiki-spaces</li></ol></td><td>空间管理正常；read/write/admin_roles 生效</td></tr>
+            <tr><td class="col-id">TC-WIKI-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>文档树查询</b></td><td class="col-steps"><ol><li>GET /api/v1/wiki-spaces/{id}/docs?depth=3</li></ol></td><td>返回嵌套 tree 结构（最多 5 层）</td></tr>
+            <tr><td class="col-id">TC-WIKI-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>文档嵌套-5 层限制</b></td><td class="col-steps"><ol><li>尝试建第 6 层</li></ol></td><td>HTTP 400；<code>MAX_LEVEL_EXCEEDED</code></td></tr>
+            <tr><td class="col-id">TC-WIKI-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>创建文档</b></td><td class="col-steps"><ol><li>POST /api/v1/wiki-docs</li><li>Body: <code>{"space_id":1,"parent_doc_id":5,"title":"...","content_md":"..."}</code></li></ol></td><td>HTTP 201；doc_path 自动计算</td></tr>
+            <tr><td class="col-id">TC-WIKI-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>文档移动</b></td><td class="col-steps"><ol><li>POST /api/v1/wiki-docs/{id}/move</li><li>Body: <code>{"new_parent_doc_id":10}</code></li></ol></td><td>文档位置变更；doc_path 更新；子文档路径同步</td></tr>
+            <tr><td class="col-id">TC-WIKI-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>双向链接 [[]]</b></td><td class="col-steps"><ol><li>文档 A 写 [[文档B]]</li><li>查 A 详情</li></ol></td><td>A.linked_docs 包含 B.id；B 反向链接含 A</td></tr>
+            <tr><td class="col-id">TC-WIKI-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>文档订阅</b></td><td class="col-steps"><ol><li>POST /api/v1/wiki-docs/{id}/subscribe</li><li>文档更新时收到通知</li></ol></td><td>订阅入库；更新触发通知</td></tr>
+            <tr><td class="col-id">TC-WIKI-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 PDF</b></td><td class="col-steps"><ol><li>GET /api/v1/wiki-docs/{id}/export/pdf</li></ol></td><td>下载 PDF；含样式/图片</td></tr>
+            <tr><td class="col-id">TC-WIKI-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 Word</b></td><td class="col-steps"><ol><li>GET /export/docx</li></ol></td><td>下载 docx</td></tr>
+            <tr><td class="col-id">TC-WIKI-010</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 生成</b></td><td class="col-steps"><ol><li>POST /ai/generate</li></ol></td><td>基于主题/变更生成文档草稿</td></tr>
+            <tr><td class="col-id">TC-WIKI-011</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>版本对比</b></td><td class="col-steps"><ol><li>GET /versions/{v1}/diff?v2=...</li></ol></td><td>侧边栏高亮显示差异</td></tr>
+            <tr><td class="col-id">TC-WIKI-012</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>文档统计</b></td><td class="col-steps"><ol><li>查 doc.view_count/edit_count/related_changes</li></ol></td><td>自动累计；每次查看+1</td></tr>
+            <tr><td class="col-id">TC-WIKI-013</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>软删除+恢复</b></td><td class="col-steps"><ol><li>DELETE → 7 天内恢复</li><li>7 天后物理删除</li></ol></td><td>is_deleted=1；定时任务清理</td></tr>
+            <tr><td class="col-id">TC-WIKI-014</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-info">接口</span></td><td><b>Obsidian 导出</b></td><td class="col-steps"><ol><li>POST /api/v1/wiki/export/obsidian</li></ol></td><td>生成 .md vault；[[链接]] 语法</td></tr>
+            <tr><td class="col-id">TC-WIKI-015</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>文档树 UI</b></td><td class="col-steps"><ol><li>进入 /wiki → 左侧树形目录</li></ol></td><td>可拖拽移动；右键菜单</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="timeline" class="doc-section">
+    <h2 class="section-title">📅 19. 看板/时间线模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(14 用例)</span></h2>
+    <p class="section-text">对应 PRD §5.13 看板/时间线视图。甘特图/看板/日历/人员 4 种视图切换，拖拽调整排期。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-VIEW-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>时间线数据</b></td><td class="col-steps"><ol><li>GET /api/v1/timeline?view_type=timeline&version_id=10</li></ol></td><td>返回 items[]：planned_start/end, status, delay_days, progress_pct</td></tr>
+            <tr><td class="col-id">TC-VIEW-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>看板数据</b></td><td class="col-steps"><ol><li>view_type=kanban</li></ol></td><td>返回 pending/in_progress/testing/published 分组</td></tr>
+            <tr><td class="col-id">TC-VIEW-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>日历数据</b></td><td class="col-steps"><ol><li>view_type=calendar&start_date&end_date</li></ol></td><td>按月/周聚合</td></tr>
+            <tr><td class="col-id">TC-VIEW-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>人员视图</b></td><td class="col-steps"><ol><li>view_type=person</li></ol></td><td>按负责人聚合</td></tr>
+            <tr><td class="col-id">TC-VIEW-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>排期拖拽更新</b></td><td class="col-steps"><ol><li>PUT /api/v1/timeline/{change_id}</li><li>Body: <code>{"planned_start":"2026-06-15","planned_end":"2026-06-20"}</code></li></ol></td><td>排期更新；delay_days 自动重算</td></tr>
+            <tr><td class="col-id">TC-VIEW-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>状态拖拽更新</b></td><td class="col-steps"><ol><li>Body: <code>{"status":"in_progress","progress_pct":50}</code></li></ol></td><td>状态变更；实际开始/结束日期按规则记录</td></tr>
+            <tr><td class="col-id">TC-VIEW-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>排期冲突检测</b></td><td class="col-steps"><ol><li>同一人同时段 2 个变更</li></ol></td><td>前端红框提示</td></tr>
+            <tr><td class="col-id">TC-VIEW-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>统计面板</b></td><td class="col-steps"><ol><li>GET /api/v1/timeline/stats?version_id=10</li></ol></td><td>返回 total/completed/in_progress/delayed/avg_delay_days</td></tr>
+            <tr><td class="col-id">TC-VIEW-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>负载热力图</b></td><td class="col-steps"><ol><li>GET /heatmap?group_by=user</li></ol></td><td>返回每天/每人工作量分数</td></tr>
+            <tr><td class="col-id">TC-VIEW-010</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>延期预警</b></td><td class="col-steps"><ol><li>变更延期 2 天</li></ol></td><td>前端标红 + 通知负责人</td></tr>
+            <tr><td class="col-id">TC-VIEW-011</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>用户视图配置保存</b></td><td class="col-steps"><ol><li>POST /api/v1/user/view-config</li><li>Body: <code>{"view_type":"kanban","filter_config":{...}}</code></li></ol></td><td>下次访问自动恢复</td></tr>
+            <tr><td class="col-id">TC-VIEW-012</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>导出 PDF/PNG</b></td><td class="col-steps"><ol><li>POST /api/v1/timeline/export</li><li>Body: <code>{"view_type":"gantt","format":"pdf"}</code></li></ol></td><td>下载 PDF/PNG</td></tr>
+            <tr><td class="col-id">TC-VIEW-013</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>甘特图交互</b></td><td class="col-steps"><ol><li>拖拽变更项调整时间</li></ol></td><td>实时更新；自动调用 PUT API</td></tr>
+            <tr><td class="col-id">TC-VIEW-014</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>时间缩放</b></td><td class="col-steps"><ol><li>切换周/月/季度</li></ol></td><td>甘特图按粒度渲染</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="audit" class="doc-section">
+    <h2 class="section-title">📋 20. 审计日志模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(6 用例)</span></h2>
+    <p class="section-text">对应 PRD §9.2 操作审计。记录所有关键操作 + AI 使用审计。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-AUDIT-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>登录日志</b></td><td class="col-steps"><ol><li>用户登录/登出/失败</li><li>查 /api/v1/audit/logs</li></ol></td><td>记录 user_id/IP/UA/时间/结果</td></tr>
+            <tr><td class="col-id">TC-AUDIT-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>数据变更日志</b></td><td class="col-steps"><ol><li>变更 CRUD/审批/导出</li></ol></td><td>记录 before/after 差异</td></tr>
+            <tr><td class="col-id">TC-AUDIT-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>AI 使用审计</b></td><td class="col-steps"><ol><li>AI 检索/说明书/文档分析调用</li></ol></td><td>记录 user_id/query/tokens/model/cost</td></tr>
+            <tr><td class="col-id">TC-AUDIT-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>日志查询-多维筛选</b></td><td class="col-steps"><ol><li>GET /audit/logs?user_id&action&start_date&end_date</li></ol></td><td>按用户/操作/时间精确筛选</td></tr>
+            <tr><td class="col-id">TC-AUDIT-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>日志导出</b></td><td class="col-steps"><ol><li>GET /audit/logs/export?format=xlsx</li></ol></td><td>下载 Excel；含筛选条件</td></tr>
+            <tr><td class="col-id">TC-AUDIT-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>日志不可篡改</b></td><td class="col-steps"><ol><li>尝试直接 UPDATE audit_log</li></ol></td><td>DB 触发器拒绝；或仅追加</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="multidb" class="doc-section">
+    <h2 class="section-title">🗄️ 21. 多数据库适配模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(12 用例)</span></h2>
+    <p class="section-text">对应 PRD §2.2 多数据库支持、§6.4 方言差异。支持 MySQL/PG/Oracle/SQLServer/达梦 DM。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-DB-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>MySQL 连接</b><br><span class="tag tag-muted">前置</span> MySQL 8+</td><td class="col-steps"><ol><li>配置 mysql 驱动</li><li>运行 alembic upgrade head</li></ol></td><td>迁移成功；CRUD 正常</td></tr>
+            <tr><td class="col-id">TC-DB-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>PostgreSQL 连接</b><br><span class="tag tag-muted">前置</span> PG 14+</td><td class="col-steps"><ol><li>配置 postgresql 驱动</li></ol></td><td>SERIAL 自增；JSON 字段正常</td></tr>
+            <tr><td class="col-id">TC-DB-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>Oracle 连接</b><br><span class="tag tag-muted">前置</span> Oracle 19c+</td><td class="col-steps"><ol><li>配置 ojdbc8 驱动</li></ol></td><td>SEQUENCE 序列；ROWNUM 分页</td></tr>
+            <tr><td class="col-id">TC-DB-004</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>SQL Server 连接</b><br><span class="tag tag-muted">前置</span> mssql 2019+</td><td class="col-steps"><ol><li>配置 mssql-jdbc</li></ol></td><td>IDENTITY 自增；OFFSET...FETCH</td></tr>
+            <tr><td class="col-id">TC-DB-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>达梦 DM 连接</b><br><span class="tag tag-muted">前置</span> DM 8</td><td class="col-steps"><ol><li>配置 dm-jdbc</li></ol></td><td>兼容 Oracle 方言</td></tr>
+            <tr><td class="col-id">TC-DB-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>方言转换-分页</b></td><td class="col-steps"><ol><li>代码调用 page(10,20)</li><li>看生成的 SQL</li></ol></td><td>MySQL: LIMIT 20,10；PG: LIMIT 10 OFFSET 20；Oracle: ROWNUM 子查询</td></tr>
+            <tr><td class="col-id">TC-DB-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>方言转换-自增</b></td><td class="col-steps"><ol><li>插入新行获取 id</li></ol></td><td>5 种库都能返回自增 id</td></tr>
+            <tr><td class="col-id">TC-DB-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>方言转换-字符串拼接</b></td><td class="col-steps"><ol><li>SELECT 'a' + 'b'</li></ol></td><td>MySQL/DM: CONCAT；PG/Oracle: ||；SQL Server: +</td></tr>
+            <tr><td class="col-id">TC-DB-009</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-info">接口</span></td><td><b>方言转换-空值</b></td><td class="col-steps"><ol><li>SELECT IFNULL/COALESCE/NVL/ISNULL</li></ol></td><td>各库对应函数正确</td></tr>
+            <tr><td class="col-id">TC-DB-010</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>数据库密码加密</b></td><td class="col-steps"><ol><li>查 biz_product.db_password_enc</li></ol></td><td>AES256 加密；非明文</td></tr>
+            <tr><td class="col-id">TC-DB-011</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>产品级 DB 切换</b></td><td class="col-steps"><ol><li>产品 P 从 MySQL 切到 PG</li><li>验证业务调用正常</li></ol></td><td>无需改代码；CRUD 正常</td></tr>
+            <tr><td class="col-id">TC-DB-012</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-info">接口</span></td><td><b>Flyway 多库支持</b></td><td class="col-steps"><ol><li>V1001__init.sql 在 5 库中执行</li></ol></td><td>5 库均迁移成功</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="perf" class="doc-section">
+    <h2 class="section-title">⚡ 22. 性能测试模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(8 用例)</span></h2>
+    <p class="section-text">对应 PRD §9.1 性能指标。使用 Locust 压测；监控 P95/P99 响应时间。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-PERF-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-warning">性能</span></td><td><b>页面加载</b></td><td class="col-steps"><ol><li>清缓存访问 /dashboard</li></ol></td><td>首屏 &lt; 2s</td></tr>
+            <tr><td class="col-id">TC-PERF-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-warning">性能</span></td><td><b>API 响应时间</b></td><td class="col-steps"><ol><li>100 并发 /api/v1/changes 持续 5min</li></ol></td><td>P95 &lt; 500ms</td></tr>
+            <tr><td class="col-id">TC-PERF-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-warning">性能</span></td><td><b>AI 检索</b></td><td class="col-steps"><ol><li>50 并发 /api/v1/ai/search</li></ol></td><td>P95 &lt; 3s；P99 &lt; 5s</td></tr>
+            <tr><td class="col-id">TC-PERF-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-warning">性能</span></td><td><b>图片上传</b></td><td class="col-steps"><ol><li>并发 20 上传 10MB 图</li></ol></td><td>P95 &lt; 5s</td></tr>
+            <tr><td class="col-id">TC-PERF-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-warning">性能</span></td><td><b>头像上传</b></td><td class="col-steps"><ol><li>上传 5MB 头像（含缩略图）</li></ol></td><td>&lt; 3s</td></tr>
+            <tr><td class="col-id">TC-PERF-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-warning">性能</span></td><td><b>并发 QPS</b></td><td class="col-steps"><ol><li>100 QPS 持续 10 分钟</li></ol></td><td>无 5xx；P95 达标</td></tr>
+            <tr><td class="col-id">TC-PERF-007</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-warning">性能</span></td><td><b>微信登录响应</b></td><td class="col-steps"><ol><li>扫码→登录完成</li></ol></td><td>&lt; 3s</td></tr>
+            <tr><td class="col-id">TC-PERF-008</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-warning">性能</span></td><td><b>数据库慢查询</b></td><td class="col-steps"><ol><li>开启 PG slow log</li><li>运行核心场景 1h</li></ol></td><td>无 &gt; 1s 查询；索引使用率 &gt; 95%</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="security" class="doc-section">
+    <h2 class="section-title">🔒 23. 安全测试模块 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(12 用例)</span></h2>
+    <p class="section-text">对应 PRD §9.2 安全性。使用 OWASP ZAP/Burp Suite 扫描 + 手工渗透。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-SEC-001</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>SQL 注入</b></td><td class="col-steps"><ol><li>username=' OR '1'='1</li></ol></td><td>参数化查询；不命中</td></tr>
+            <tr><td class="col-id">TC-SEC-002</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>XSS 反射型</b></td><td class="col-steps"><ol><li>content 字段写 &lt;script&gt;alert(1)&lt;/script&gt;</li></ol></td><td>输出转义；不执行</td></tr>
+            <tr><td class="col-id">TC-SEC-003</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>XSS 存储型</b></td><td class="col-steps"><ol><li>笔记内容注入恶意脚本</li><li>他人查看时是否触发</li></ol></td><td>DOMPurify 清洗；不触发</td></tr>
+            <tr><td class="col-id">TC-SEC-004</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>CSRF</b></td><td class="col-steps"><ol><li>伪造跨站请求</li></ol></td><td>SameSite=Strict 或 Token 验证</td></tr>
+            <tr><td class="col-id">TC-SEC-005</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>水平越权-IDOR</b></td><td class="col-steps"><ol><li>A 改 URL 中 id 为 B 的资源 id</li></ol></td><td>403；服务端校验 owner</td></tr>
+            <tr><td class="col-id">TC-SEC-006</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>垂直越权</b></td><td class="col-steps"><ol><li>editor 调用 admin API</li></ol></td><td>403；角色校验</td></tr>
+            <tr><td class="col-id">TC-SEC-007</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>文件上传漏洞</b></td><td class="col-steps"><ol><li>上传 .php / .jsp 文件</li></ol></td><td>白名单+扩展名+magic number</td></tr>
+            <tr><td class="col-id">TC-SEC-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>密码爆破</b><br><span class="tag tag-muted">前置</span> hydra</td><td class="col-steps"><ol><li>字典攻击登录</li></ol></td><td>5 次失败锁定；CAPTCHA</td></tr>
+            <tr><td class="col-id">TC-SEC-009</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>敏感信息泄露</b></td><td class="col-steps"><ol><li>访问 /api/v1/users → 列表</li></ol></td><td>不返回 password_hash/wechat_openid 字段</td></tr>
+            <tr><td class="col-id">TC-SEC-010</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>HTTPS 强制</b></td><td class="col-steps"><ol><li>HTTP 访问 → 应 301→HTTPS</li></ol></td><td>Strict-Transport-Security 头</td></tr>
+            <tr><td class="col-id">TC-SEC-011</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-accent">安全</span></td><td><b>SSRF</b></td><td class="col-steps"><ol><li>image_url 指向内网 169.254.169.254</li></ol></td><td>URL 白名单；拒绝内网</td></tr>
+            <tr><td class="col-id">TC-SEC-012</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-accent">安全</span></td><td><b>依赖漏洞扫描</b></td><td class="col-steps"><ol><li>npm audit / pip-audit / safety</li></ol></td><td>无 high/critical 漏洞</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="compat" class="doc-section">
+    <h2 class="section-title">🌐 24. 兼容性 & 可用性测试 <span style="font-size:13px; color:var(--theme-text-muted); font-weight:400;">(8 用例)</span></h2>
+    <p class="section-text">浏览器兼容、屏幕分辨率、移动端、可用性测试。</p>
+    <table class="test-table">
+        <thead><tr><th style="width:120px;">用例 ID</th><th style="width:80px;">优先级</th><th style="width:70px;">类型</th><th>标题 / 前置条件</th><th>操作步骤</th><th>预期结果</th></tr></thead>
+        <tbody>
+            <tr><td class="col-id">TC-COMPAT-001</td><td><span class="tag tag-p0\">P0</span></td><td><span class="tag tag-primary">UI</span></td><td><b>Chrome 兼容</b></td><td class="col-steps"><ol><li>Chrome 最新版跑核心流程</li></ol></td><td>所有功能正常</td></tr>
+            <tr><td class="col-id">TC-COMPAT-002</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>Edge 兼容</b></td><td class="col-steps"><ol><li>Edge 最新版跑核心流程</li></ol></td><td>所有功能正常</td></tr>
+            <tr><td class="col-id">TC-COMPAT-003</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>Firefox 兼容</b></td><td class="col-steps"><ol><li>Firefox 最新版跑核心流程</li></ol></td><td>所有功能正常</td></tr>
+            <tr><td class="col-id">TC-COMPAT-004</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>Safari 兼容</b></td><td class="col-steps"><ol><li>Safari 最新版跑核心流程</li></ol></td><td>所有功能正常（可能有 UI 微调）</td></tr>
+            <tr><td class="col-id">TC-COMPAT-005</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>1920×1080 适配</b></td><td class="col-steps"><ol><li>全屏 FHD 显示</li></ol></td><td>布局正常；无横向滚动</td></tr>
+            <tr><td class="col-id">TC-COMPAT-006</td><td><span class="tag tag-p1">P1</span></td><td><span class="tag tag-primary">UI</span></td><td><b>1366×768 适配</b></td><td class="col-steps"><ol><li>常见笔电分辨率</li></ol></td><td>布局正常；侧边栏可收起</td></tr>
+            <tr><td class="col-id">TC-COMPAT-007</td><td><span class="tag tag-p2">P2</span></td><td><span class="tag tag-primary">UI</span></td><td><b>移动端响应式</b></td><td class="col-steps"><ol><li>iPhone/Android 访问</li></ol></td><td>布局自动适配；关键功能可用</td></tr>
+            <tr><td class="col-id">TC-COMPAT-008</td><td><span class="tag tag-p0">P0</span></td><td><span class="tag tag-primary">UI</span></td><td><b>系统可用性 99.9%</b></td><td class="col-steps"><ol><li>持续 30 天监控</li></ol></td><td>年宕机时间 &lt; 9h</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section id="appendix" class="doc-section">
+    <h2 class="section-title">📎 附录：测试执行 Checklist</h2>
+    <h3 class="section-subtitle">A. 冒烟测试 Checklist（每日构建必跑）</h3>
+    <ul style="padding-left:24px; line-height:2;">
+        <li>☐ TC-AUTH-001 账号密码登录成功</li>
+        <li>☐ TC-CHG-001/002 创建变更成功</li>
+        <li>☐ TC-CHG-009 审批通过</li>
+        <li>☐ TC-CHG-016 详情查询</li>
+        <li>☐ TC-IMG-001 单张图片上传</li>
+        <li>☐ TC-AI-001 文本检索</li>
+        <li>☐ TC-GRAPH-001 影响分析</li>
+        <li>☐ TC-USER-001 获取个人信息</li>
+        <li>☐ TC-PERM-022 越权拦截</li>
+    </ul>
+    <h3 class="section-subtitle">B. 集成测试 Checklist（每 Sprint 跑）</h3>
+    <ul style="padding-left:24px; line-height:2;">
+        <li>☐ 微信扫码登录完整链路</li>
+        <li>☐ MinIO 上传 → RAGFlow OCR → 向量入库</li>
+        <li>☐ Flyway 执行 → 自动创建变更 → GraphRAG 更新</li>
+        <li>☐ 5 种数据库方言切换</li>
+        <li>☐ 多业务线数据隔离</li>
+        <li>☐ AI 检索跨模块结果聚合</li>
+    </ul>
+    <h3 class="section-subtitle">C. 缺陷等级定义</h3>
+    <table class="test-table">
+        <thead><tr><th>等级</th><th>影响</th><th>修复 SLA</th><th>示例</th></tr></thead>
+        <tbody>
+            <tr><td><span class="tag tag-accent">Critical</span></td><td>系统不可用 / 数据丢失</td><td>4h</td><td>登录失败、数据库宕机</td></tr>
+            <tr><td><span class="tag tag-accent">Major</span></td><td>主流程无法使用</td><td>1d</td><td>创建变更失败、导出失败</td></tr>
+            <tr><td><span class="tag tag-warning">Minor</span></td><td>次要功能异常</td><td>3d</td><td>AI 检索不准确、UI 错位</td></tr>
+            <tr><td><span class="tag tag-info">Trivial</span></td><td>UI 文案 / 体验</td><td>下版本</td><td>文案错字、颜色不符</td></tr>
+        </tbody>
+    </table>
+    <h3 class="section-subtitle">D. 工具链</h3>
+    <div class="card-grid">
+        <div class="card"><div class="card-title">🧪 API 测试</div><div class="card-text">Pytest + httpx + pytest-allure；Allure 报告</div></div>
+        <div class="card"><div class="card-title">🎭 E2E 测试</div><div class="card-text">Playwright（Chromium/WebKit/Firefox）；trace viewer</div></div>
+        <div class="card"><div class="card-title">⚡ 性能测试</div><div class="card-text">Locust；Grafana + Prometheus 监控</div></div>
+        <div class="card"><div class="card-title">🔒 安全测试</div><div class="card-text">OWASP ZAP + Burp Suite + sqlmap + hydra</div></div>
+        <div class="card"><div class="card-title">📊 代码质量</div><div class="card-text">SonarQube；ESLint；mypy/ruff</div></div>
+        <div class="card"><div class="card-title">📝 缺陷管理</div><div class="card-text">Jira / 禅道 / GitHub Issues</div></div>
+    </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== Theme Switcher =====
+  var THEME_KEY = 'guigraph-test-theme';
+  var VALID_THEMES = ['business', 'tech', 'minimal'];
+  var html = document.documentElement;
+  var themeButtons = document.querySelectorAll('.theme-btn');
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    themeButtons.forEach(function (b) {
+      b.classList.toggle('active', b.dataset.theme === theme);
+    });
+  }
+
+  var saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch (e) { /* private mode */ }
+  if (saved && VALID_THEMES.indexOf(saved) !== -1) applyTheme(saved);
+
+  themeButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var theme = btn.dataset.theme;
+      applyTheme(theme);
+      try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* ignore */ }
+    });
+  });
+
+  // ===== Sidebar Navigation =====
+  var navItems = document.querySelectorAll('.nav-item[data-target]');
+  var sections = [];
+  var sectionsById = {};
+
+  navItems.forEach(function (item) {
+    var id = item.dataset.target;
+    var section = document.getElementById(id);
+    if (!section) return;
+    var entry = { id: id, nav: item, section: section };
+    sections.push(entry);
+    sectionsById[id] = entry;
+
+    item.addEventListener('click', function () {
+      var headerOffset = 70;
+      var top = section.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+      setActive(id);
+    });
+  });
+
+  function setActive(id) {
+    navItems.forEach(function (item) {
+      item.classList.toggle('active', item.dataset.target === id);
+    });
+  }
+
+  // ===== Scroll Spy =====
+  var headerOffset = 80;
+  var rafPending = false;
+
+  function updateScrollSpy() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function () {
+      rafPending = false;
+      if (sections.length === 0) return;
+
+      var scrollY = window.scrollY;
+      var docHeight = document.documentElement.scrollHeight;
+      var viewportHeight = window.innerHeight;
+
+      // Bottom of page → highlight last section
+      if (scrollY + viewportHeight >= docHeight - 60) {
+        setActive(sections[sections.length - 1].id);
+        return;
+      }
+
+      // Find the last section whose top is above the viewport top
+      var currentId = sections[0].id;
+      var viewportLine = scrollY + headerOffset + 20;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].section.offsetTop <= viewportLine) {
+          currentId = sections[i].id;
+        } else {
+          break;
+        }
+      }
+      setActive(currentId);
+    });
+  }
+
+  window.addEventListener('scroll', updateScrollSpy, { passive: true });
+  window.addEventListener('resize', updateScrollSpy);
+  updateScrollSpy();
+
+  // ===== Back to Top (lightweight) =====
+  // Reuse theme switcher floating panel: add a small ↑ button if scroll > 400
+  var backToTop = document.createElement('button');
+  backToTop.className = 'theme-btn';
+  backToTop.title = '回到顶部';
+  backToTop.textContent = '↑';
+  backToTop.style.cssText = 'position:fixed;bottom:20px;right:20px;width:38px;height:38px;border-radius:50%;' +
+    'background:var(--theme-primary);color:#fff;border:none;cursor:pointer;font-size:18px;' +
+    'box-shadow:var(--shadow);display:none;z-index:200;';
+  backToTop.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  document.body.appendChild(backToTop);
+
+  window.addEventListener('scroll', function () {
+    backToTop.style.display = window.scrollY > 400 ? 'flex' : 'none';
+  }, { passive: true });
+
+  // ===== Global Search Filter =====
+  var searchInput = document.getElementById('tcSearch');
+  var searchClear = document.getElementById('tcSearchClear');
+  var searchStats = document.getElementById('tcSearchStats');
+  if (searchInput) {
+    var allRows = document.querySelectorAll('.test-table tbody tr');
+    var allCards = document.querySelectorAll('.doc-section .card, .doc-section .section-subtitle, .doc-section li, .doc-section p');
+    var allSections = Array.prototype.slice.call(document.querySelectorAll('.doc-section'));
+    var navCountEls = document.querySelectorAll('.nav-item[data-target] .count');
+    var originalCounts = {};
+
+    navCountEls.forEach(function (el) {
+      var nav = el.parentElement;
+      var n = parseInt(el.textContent, 10);
+      if (!isNaN(n)) originalCounts[nav.dataset.target] = n;
+    });
+
+    function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+    function clearHighlights() {
+      var marks = document.querySelectorAll('mark.tc-highlight');
+      for (var i = 0; i < marks.length; i++) {
+        var m = marks[i];
+        var text = document.createTextNode(m.textContent);
+        m.parentNode.replaceChild(text, m);
+      }
+      // Normalize adjacent text nodes
+      allSections.forEach(function (sec) {
+        sec.querySelectorAll('p, li, .card-title, .section-subtitle, td, th').forEach(function (el) {
+          el.normalize();
+        });
+      });
+    }
+
+    function highlightInNode(root, query) {
+      if (!query) return;
+      var re = new RegExp(escapeRegex(query), 'gi');
+      var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          var p = n.parentElement;
+          if (!p) return NodeFilter.FILTER_REJECT;
+          if (p.closest('.sidebar-search')) return NodeFilter.FILTER_REJECT;
+          if (p.closest('script, style, code')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var nodes = [];
+      var t;
+      while ((t = walker.nextNode())) nodes.push(t);
+      nodes.forEach(function (textNode) {
+        var text = textNode.nodeValue;
+        if (!re.test(text)) { re.lastIndex = 0; return; }
+        re.lastIndex = 0;
+        var frag = document.createDocumentFragment();
+        var lastIdx = 0;
+        var match;
+        while ((match = re.exec(text)) !== null) {
+          if (match.index > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+          var mark = document.createElement('mark');
+          mark.className = 'tc-highlight';
+          mark.textContent = match[0];
+          frag.appendChild(mark);
+          lastIdx = match.index + match[0].length;
+          if (match[0].length === 0) re.lastIndex++;
+        }
+        if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+        textNode.parentNode.replaceChild(frag, textNode);
+      });
+    }
+
+    function applyFilter() {
+      var raw = searchInput.value;
+      var q = raw.trim().toLowerCase();
+      clearHighlights();
+
+      if (!q) {
+        allRows.forEach(function (r) { r.classList.remove('tc-row-hidden'); });
+        allCards.forEach(function (c) { c.classList.remove('tc-row-hidden'); });
+        allSections.forEach(function (s) { s.classList.remove('tc-section-hidden'); });
+        navCountEls.forEach(function (el) {
+          var nav = el.parentElement;
+          var orig = originalCounts[nav.dataset.target];
+          if (orig !== undefined) el.textContent = orig;
+          nav.classList.remove('is-empty');
+        });
+        searchClear.style.display = 'none';
+        searchStats.classList.remove('active');
+        searchStats.textContent = '提示: 按 / 聚焦 · Esc 清空';
+        return;
+      }
+
+      searchClear.style.display = 'inline-flex';
+      var totalMatches = 0;
+      var sectionMatches = {};
+
+      allSections.forEach(function (section) {
+        var rows = section.querySelectorAll('.test-table tbody tr');
+        var cards = section.querySelectorAll('.card');
+        var matchCount = 0;
+
+        rows.forEach(function (row) {
+          if (row.textContent.toLowerCase().indexOf(q) !== -1) {
+            row.classList.remove('tc-row-hidden');
+            matchCount++;
+          } else {
+            row.classList.add('tc-row-hidden');
+          }
+        });
+        cards.forEach(function (card) {
+          if (card.textContent.toLowerCase().indexOf(q) !== -1) {
+            card.classList.remove('tc-row-hidden');
+          } else {
+            card.classList.add('tc-row-hidden');
+          }
+        });
+
+        sectionMatches[section.id] = matchCount;
+        var hasContent = rows.length > 0 || cards.length > 0;
+        if (hasContent && matchCount === 0) {
+          section.classList.add('tc-section-hidden');
+        } else {
+          section.classList.remove('tc-section-hidden');
+        }
+        totalMatches += matchCount;
+      });
+
+      navCountEls.forEach(function (el) {
+        var nav = el.parentElement;
+        var id = nav.dataset.target;
+        var orig = originalCounts[id];
+        if (orig === undefined) return;
+        var m = sectionMatches[id] || 0;
+        el.textContent = m + '/' + orig;
+        nav.classList.toggle('is-empty', m === 0);
+      });
+
+      var totalOrig = 0;
+      Object.keys(originalCounts).forEach(function (k) { totalOrig += originalCounts[k]; });
+      searchStats.classList.add('active');
+      if (totalMatches === 0) {
+        searchStats.textContent = '⚠ 无匹配 · 共 ' + totalOrig + ' 项';
+      } else {
+        searchStats.textContent = '✓ 命中 ' + totalMatches + ' / ' + totalOrig + ' 项';
+      }
+
+      // Highlight matched text in visible cells
+      allRows.forEach(function (row) {
+        if (!row.classList.contains('tc-row-hidden')) highlightInNode(row, raw);
+      });
+      allCards.forEach(function (card) {
+        if (!card.classList.contains('tc-row-hidden') && card.offsetParent !== null) {
+          highlightInNode(card, raw);
+        }
+      });
+    }
+
+    var filterTimer = null;
+    searchInput.addEventListener('input', function () {
+      if (filterTimer) clearTimeout(filterTimer);
+      filterTimer = setTimeout(applyFilter, 80);
+    });
+    searchClear.addEventListener('click', function () {
+      searchInput.value = '';
+      applyFilter();
+      searchInput.focus();
+    });
+
+    // Keyboard shortcuts: / to focus, Esc to clear, Ctrl+Enter to scroll to first match
+    document.addEventListener('keydown', function (e) {
+      var tag = (document.activeElement && document.activeElement.tagName) || '';
+      var isTyping = tag === 'INPUT' || tag === 'TEXTAREA';
+      if (e.key === '/' && !isTyping) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+        searchInput.value = '';
+        applyFilter();
+        searchInput.blur();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && searchInput.value.trim()) {
+        e.preventDefault();
+        var firstVisible = document.querySelector('.test-table tbody tr:not(.tc-row-hidden)');
+        if (firstVisible) {
+          firstVisible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstVisible.style.transition = 'background .3s';
+          firstVisible.style.background = 'rgba(241, 196, 15, 0.35)';
+          setTimeout(function () { firstVisible.style.background = ''; }, 1200);
+        }
+      }
+    });
+  }
+
+  // ===== Test Execution Progress Tracking =====
+  var STATUS_KEY = 'guigraph-tc-status';
+  var STATUS_CYCLE = ['', 'pass', 'fail', 'block', 'skip'];
+  var STATUS_GLYPH = { '': '○', 'pass': '✓', 'fail': '✗', 'block': '!', 'skip': '—' };
+  var STORAGE = null;
+  try { STORAGE = JSON.parse(localStorage.getItem(STATUS_KEY) || '{}'); } catch (e) { STORAGE = {}; }
+
+  var tcButtons = [];
+  var tcTotal = 0;
+  document.querySelectorAll('.test-table tbody tr').forEach(function (row) {
+    var firstCell = row.cells[0];
+    if (!firstCell) return;
+    var m = firstCell.textContent.trim().match(/^(TC-[A-Z]+-\d+)/);
+    if (!m) return;
+    var tcId = m[1];
+    tcTotal++;
+
+    var wrap = document.createElement('span');
+    wrap.className = 'tc-id-wrap';
+    var btn = document.createElement('button');
+    btn.className = 'tc-status-btn';
+    btn.dataset.tc = tcId;
+    btn.title = tcId + ' · 点击切换状态 · 右键重置';
+    var label = document.createElement('span');
+    label.className = 'tc-id-text';
+    label.textContent = tcId;
+    wrap.appendChild(btn);
+    wrap.appendChild(label);
+    firstCell.innerHTML = '';
+    firstCell.appendChild(wrap);
+
+    var entry = { btn: btn, row: row, tcId: tcId };
+    tcButtons.push(entry);
+    applyStatusToBtn(btn, row, STORAGE[tcId] || '');
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var cur = btn.getAttribute('data-status') || '';
+      var idx = STATUS_CYCLE.indexOf(cur);
+      var next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+      if (next) STORAGE[tcId] = next; else delete STORAGE[tcId];
+      try { localStorage.setItem(STATUS_KEY, JSON.stringify(STORAGE)); } catch (e2) { /* ignore */ }
+      applyStatusToBtn(btn, row, next);
+      updateProgressStats();
+    });
+    btn.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      delete STORAGE[tcId];
+      try { localStorage.setItem(STATUS_KEY, JSON.stringify(STORAGE)); } catch (e2) { /* ignore */ }
+      applyStatusToBtn(btn, row, '');
+      updateProgressStats();
+    });
+  });
+
+  function applyStatusToBtn(btn, row, status) {
+    btn.setAttribute('data-status', status);
+    btn.textContent = STATUS_GLYPH[status] || '○';
+    row.classList.remove('tc-row-pass', 'tc-row-fail', 'tc-row-block', 'tc-row-skip');
+    if (status) row.classList.add('tc-row-' + status);
+  }
+
+  function updateProgressStats() {
+    var cPass = 0, cFail = 0, cBlock = 0, cSkip = 0;
+    Object.keys(STORAGE).forEach(function (k) {
+      var s = STORAGE[k];
+      if (s === 'pass') cPass++;
+      else if (s === 'fail') cFail++;
+      else if (s === 'block') cBlock++;
+      else if (s === 'skip') cSkip++;
+    });
+    var tested = cPass + cFail + cBlock + cSkip;
+    var pct = tcTotal > 0 ? Math.round(tested / tcTotal * 100) : 0;
+    var pctEl = document.getElementById('progPct');
+    document.getElementById('progTested').textContent = tested;
+    document.getElementById('progTotal').textContent = tcTotal;
+    pctEl.textContent = pct + '%';
+    pctEl.style.color = pct === 100 ? 'var(--theme-success)' : (pct > 0 ? 'var(--theme-warning)' : 'var(--theme-text-muted)');
+    document.getElementById('progBarFill').style.width = pct + '%';
+    document.getElementById('cntPass').textContent = cPass;
+    document.getElementById('cntFail').textContent = cFail;
+    document.getElementById('cntBlock').textContent = cBlock;
+    document.getElementById('cntSkip').textContent = cSkip;
+  }
+  updateProgressStats();
+
+  var btnReset = document.getElementById('btnResetProgress');
+  if (btnReset) {
+    btnReset.addEventListener('click', function () {
+      var tested = Object.keys(STORAGE).length;
+      if (tested === 0) { alert('当前没有已执行的用例'); return; }
+      if (!confirm('确定要重置所有 ' + tested + ' 个已执行用例的状态吗？\n此操作不可撤销。')) return;
+      STORAGE = {};
+      try { localStorage.setItem(STATUS_KEY, JSON.stringify({})); } catch (e) { /* ignore */ }
+      tcButtons.forEach(function (o) { applyStatusToBtn(o.btn, o.row, ''); });
+      updateProgressStats();
+    });
+  }
+
+  var btnExport = document.getElementById('btnExportProgress');
+  if (btnExport) {
+    btnExport.addEventListener('click', function () {
+      var tested = Object.keys(STORAGE).length;
+      if (tested === 0) { alert('当前没有已执行的用例可导出'); return; }
+      var data = {
+        exportedAt: new Date().toISOString(),
+        project: 'GuiGraph v1.0',
+        total: tcTotal,
+        tested: tested,
+        breakdown: {
+          pass:  Object.keys(STORAGE).filter(function (k) { return STORAGE[k] === 'pass'; }).length,
+          fail:  Object.keys(STORAGE).filter(function (k) { return STORAGE[k] === 'fail'; }).length,
+          block: Object.keys(STORAGE).filter(function (k) { return STORAGE[k] === 'block'; }).length,
+          skip:  Object.keys(STORAGE).filter(function (k) { return STORAGE[k] === 'skip'; }).length
+        },
+        results: STORAGE
+      };
+      var json = JSON.stringify(data, null, 2);
+      var blob = new Blob([json], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'guigraph-test-results-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    });
+  }
+})();
+</script>
+</body>
+</html>

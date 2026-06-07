@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - heading "GuiGraph" [level=1] [ref=e5]
+    - heading "版本变更管理系统" [level=2] [ref=e6]
+    - generic [ref=e7]:
+      - generic [ref=e11]:
+        - img [ref=e14]
+        - textbox "用户名/邮箱/手机" [ref=e16]: admin
+      - generic [ref=e21]:
+        - img [ref=e24]
+        - textbox "密码" [ref=e27]: admin123
+        - img [ref=e52] [cursor=pointer]
+      - button "登录" [ref=e31] [cursor=pointer]:
+        - generic [ref=e32]: 登录
+      - button "微信扫码登录" [ref=e35] [cursor=pointer]:
+        - generic [ref=e36]:
+          - img [ref=e38]
+          - text: 微信扫码登录
+    - paragraph [ref=e40]:
+      - text: 还没有账号？
+      - generic [ref=e42] [cursor=pointer]: 申请注册
+  - alert [ref=e55]:
+    - img [ref=e57]
+    - paragraph [ref=e59]: 用户名或密码错误，或账号未激活

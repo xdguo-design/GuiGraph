@@ -1,6 +1,6 @@
 """Git 集成模块路由。"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 
 from app.core.deps.auth import get_current_user
 from app.core.utils.response import Response
@@ -14,12 +14,23 @@ router = APIRouter()
 
 
 @router.get("/repos")
-async def list_repos(user_id: str = Depends(get_current_user)):
+async def list_repos(
+    page: int = 1,
+    page_size: int = 20,
+    user_id: str = Depends(get_current_user),
+):
     """获取用户可访问的 Git 仓库列表。"""
-    return Response.ok({"items": [], "total": 0})
+    total_pages = (0 + page_size - 1) // page_size if page_size > 0 else 0
+    return Response.ok({
+        "items": [],
+        "total": 0,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    })
 
 
-@router.post("/repos", response_model=GitRepoResponse)
+@router.post("/repos")
 async def create_repo(
     body: GitRepoCreate,
     user_id: str = Depends(get_current_user),
@@ -52,7 +63,7 @@ async def list_branches(repo_id: str, user_id: str = Depends(get_current_user)):
 @router.post("/repos/{repo_id}/auth")
 async def auth_repo(
     repo_id: str,
-    user_id: str,
+    user_id: str = Body(..., embed=True),
     granted_by: str = Depends(get_current_user),
 ):
     """为用户授权 Git 仓库。"""
@@ -65,7 +76,58 @@ async def revoke_auth(repo_id: str, user_id: str, current_user: str = Depends(ge
     return Response.ok({"message": "撤销成功"})
 
 
-@router.post("/merge", response_model=MergeResult)
+@router.get("/repos/{repo_id}")
+async def get_repo(repo_id: str, user_id: str = Depends(get_current_user)):
+    """获取单个 Git 仓库详情。"""
+    return Response.ok({
+        "id": repo_id,
+        "name": "示例仓库",
+        "url": "https://github.com/example/repo.git",
+        "auth_type": "token",
+        "default_branch": "main",
+        "created_by": user_id,
+        "created_at": "2024-01-15T10:30:00Z",
+    })
+
+
+@router.put("/repos/{repo_id}")
+async def update_repo(
+    repo_id: str,
+    body: GitRepoCreate,
+    user_id: str = Depends(get_current_user),
+):
+    """更新 Git 仓库。"""
+    return Response.ok({
+        "id": repo_id,
+        "name": body.name,
+        "url": body.url,
+        "auth_type": body.auth_type,
+        "default_branch": "main",
+        "updated_by": user_id,
+        "updated_at": "2024-01-15T10:30:00Z",
+    })
+
+
+@router.delete("/repos/{repo_id}")
+async def delete_repo(repo_id: str, user_id: str = Depends(get_current_user)):
+    """删除 Git 仓库。"""
+    return Response.ok({"message": "删除成功"})
+
+
+@router.post("/repos/test")
+async def test_repo(
+    body: GitRepoCreate,
+    user_id: str = Depends(get_current_user),
+):
+    """测试 Git 仓库连接。"""
+    return Response.ok({
+        "success": True,
+        "message": "连接测试成功",
+        "branch": "main",
+    })
+
+
+@router.post("/merge")
 async def merge_branches(
     body: MergeRequest,
     user_id: str = Depends(get_current_user),

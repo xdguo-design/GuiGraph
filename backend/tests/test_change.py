@@ -15,8 +15,8 @@ class TestChangeListAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["code"] == "OK"
-        assert "items" in data["data"]["data"]
-        assert "total" in data["data"]["data"]
+        assert "items" in data["data"]
+        assert "total" in data["data"]
 
     def test_list_changes_with_filters(self, client, auth_token):
         """带筛选条件的查询应返回 200。"""

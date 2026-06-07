@@ -1,6 +1,6 @@
 """组织架构模块 ORM 模型。"""
 
-from sqlalchemy import String, Integer, Text
+from sqlalchemy import String, Integer, Text, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
@@ -27,8 +27,8 @@ class BizDepartment(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="部门名称")
     code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, comment="部门编码")
-    company_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="所属公司 ID")
-    parent_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="父部门 ID")
+    company_id: Mapped[int] = mapped_column(Integer, ForeignKey("sys_company.id"), nullable=False, comment="所属公司 ID")
+    parent_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("biz_department.id"), nullable=True, comment="父部门 ID")
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="创建人 ID")
 
     company = relationship("SysCompany", back_populates="departments")
@@ -54,16 +54,13 @@ class BizTeam(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="团队名称")
     code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, comment="团队编码")
-    department_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="所属部门 ID")
+    department_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_department.id"), nullable=False, comment="所属部门 ID")
     description: Mapped[str | None] = mapped_column(Text, nullable=True, comment="团队描述")
+    color: Mapped[str | None] = mapped_column(String(9), nullable=True, comment="团队主色（HEX，如 #3b82f6），看板用")
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="创建人 ID")
 
     department = relationship("BizDepartment", back_populates="teams")
     members = relationship("BizTeamMember", back_populates="team", cascade="all, delete-orphan")
-    git_repos = relationship("BizGitRepo", back_populates="team", cascade="all, delete-orphan")
-    domains = relationship("BizDomain", back_populates="team", cascade="all, delete-orphan")
-    applications = relationship("BizApplication", back_populates="team", cascade="all, delete-orphan")
-    components = relationship("BizComponent", back_populates="team", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict:
         return {
@@ -72,6 +69,7 @@ class BizTeam(Base, TimestampMixin):
             "code": self.code,
             "department_id": str(self.department_id),
             "description": self.description,
+            "color": self.color,
             "created_by": str(self.created_by),
         }
 
@@ -81,13 +79,13 @@ class BizTeamMember(Base, TimestampMixin):
     __tablename__ = "biz_team_member"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    team_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="团队 ID")
-    user_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="用户 ID")
+    team_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_team.id"), nullable=False, comment="团队 ID")
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("sys_user.id"), nullable=False, comment="用户 ID")
     role: Mapped[str] = mapped_column(String(20), default="member", comment="团队内角色: admin/member")
 
     team = relationship("BizTeam", back_populates="members")
 
-    __table_args__ = ({"UniqueConstraint": ("team_id", "user_id", name="uk_team_user")},)
+    __table_args__ = (UniqueConstraint("team_id", "user_id", name="uk_team_user"),)
 
     def to_dict(self) -> dict:
         return {

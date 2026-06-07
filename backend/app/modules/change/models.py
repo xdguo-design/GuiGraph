@@ -34,6 +34,7 @@ class BizChangeItem(Base, TimestampMixin):
     git_merge_commit: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="合并 Commit Hash")
     jenkins_build_id: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="关联 Jenkins 构建 ID")
     status: Mapped[ChangeStatus] = mapped_column(Enum(ChangeStatus), default=ChangeStatus.DRAFT, comment="变更状态")
+    team_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="所属团队 ID（看板按团队着色）")
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="创建人 ID")
     approved_by: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="审批人 ID")
     approved_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True, comment="审批时间")
@@ -56,6 +57,7 @@ class BizChangeItem(Base, TimestampMixin):
             "related_incidents": self.related_incidents,
             "rag_doc_id": self.rag_doc_id,
             "status": self.status.value,
+            "team_id": str(self.team_id) if self.team_id else None,
             "created_by": str(self.created_by),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

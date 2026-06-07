@@ -40,9 +40,17 @@ class LoginMethod(str, Enum):
 
 class UserStatus(str, Enum):
     """用户状态。"""
-    ACTIVE = "active"
-    DISABLED = "disabled"
-    LOCKED = "locked"
+    ACTIVE = "active"          # 正常
+    PENDING = "pending"        # 待审核（注册申请中）
+    DISABLED = "disabled"      # 已禁用
+    LOCKED = "locked"          # 已锁定
+
+
+class ApplicationStatus(str, Enum):
+    """注册申请状态。"""
+    PENDING = "pending"        # 待审核
+    APPROVED = "approved"      # 已通过
+    REJECTED = "rejected"      # 已拒绝
 
 
 class AuthType(str, Enum):

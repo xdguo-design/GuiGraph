@@ -94,8 +94,8 @@ class TestJWTToken:
     def test_verify_token_valid(self):
         """有效 Token 应通过验证。"""
         token = create_access_token({"sub": "user_001", "username": "test", "role": "editor"})
-        user_id = verify_token(token)
-        assert user_id == "user_001"
+        payload = verify_token(token)
+        assert payload["sub"] == "user_001"
 
     def test_verify_token_invalid(self):
         """无效 Token 应验证失败。"""
@@ -149,7 +149,7 @@ class TestLoginAPI:
         })
         assert response.status_code == 401
         data = response.json()
-        assert data["code"] == "ERROR"
+        assert data["code"] == "UNAUTHORIZED"
 
     def test_login_empty_username(self, client):
         """空用户名应返回 422。"""

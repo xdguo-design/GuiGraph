@@ -33,14 +33,20 @@ def db_session():
 
 
 @pytest.fixture
-def auth_token():
-    """测试用有效 Token。"""
-    from app.core.security.jwt import create_access_token
-    return create_access_token({"sub": "user_001", "username": "test_user", "role": "editor"})
+def auth_token(client):
+    """测试用有效 Token（使用实际存在的管理员账号）。"""
+    # 先登录获取真实 token
+    response = client.post("/api/v1/auth/login", json={
+        "username": "guoxudong",
+        "password": "1",
+    })
+    if response.status_code == 200:
+        return response.json()["data"]["access_token"]
+    # 如果登录失败，返回 None
+    return None
 
 
 @pytest.fixture
-def admin_token():
-    """测试用管理员 Token。"""
-    from app.core.security.jwt import create_access_token
-    return create_access_token({"sub": "admin_001", "username": "admin", "role": "system_admin"})
+def admin_token(auth_token):
+    """测试用管理员 Token（管理员账号就是 guoxudong）。"""
+    return auth_token

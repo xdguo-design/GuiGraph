@@ -3,16 +3,16 @@
 from fastapi import APIRouter, Depends
 
 from app.core.deps.auth import get_current_user
-from app.core.utils.response import Response, PageResponse
+from app.core.utils.response import Response
 from app.modules.change.schemas import (
     ChangeItemCreate, ChangeItemResponse, ChangeItemUpdate,
-    ChangeListResponse, ChangeApproveRequest,
+    ChangeApproveRequest,
 )
 
 router = APIRouter()
 
 
-@router.get("", response_model=ChangeListResponse)
+@router.get("")
 async def list_changes(
     page: int = 1,
     page_size: int = 20,
@@ -23,10 +23,17 @@ async def list_changes(
 ):
     """查询变更列表。"""
     # TODO: 从数据库查询
-    return Response.ok(PageResponse.paginate(items=[], total=0, page=page, page_size=page_size))
+    total_pages = (0 + page_size - 1) // page_size if page_size > 0 else 0
+    return Response.ok({
+        "items": [],
+        "total": 0,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    })
 
 
-@router.get("/{change_id}", response_model=ChangeItemResponse)
+@router.get("/{change_id}")
 async def get_change(change_id: str, user_id: str = Depends(get_current_user)):
     """获取变更详情。"""
     return Response.ok(ChangeItemResponse(
@@ -40,7 +47,7 @@ async def get_change(change_id: str, user_id: str = Depends(get_current_user)):
     ))
 
 
-@router.post("", response_model=ChangeItemResponse)
+@router.post("")
 async def create_change(
     body: ChangeItemCreate,
     user_id: str = Depends(get_current_user),

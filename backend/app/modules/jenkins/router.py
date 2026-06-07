@@ -13,12 +13,23 @@ router = APIRouter()
 
 
 @router.get("/instances")
-async def list_instances(user_id: str = Depends(get_current_user)):
+async def list_instances(
+    page: int = 1,
+    page_size: int = 20,
+    user_id: str = Depends(get_current_user),
+):
     """获取 Jenkins 实例列表。"""
-    return Response.ok({"items": []})
+    total_pages = (0 + page_size - 1) // page_size if page_size > 0 else 0
+    return Response.ok({
+        "items": [],
+        "total": 0,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    })
 
 
-@router.post("/instances", response_model=JenkinsInstanceResponse)
+@router.post("/instances")
 async def create_instance(
     body: JenkinsInstanceCreate,
     user_id: str = Depends(get_current_user),
@@ -33,7 +44,57 @@ async def create_instance(
     ))
 
 
-@router.post("/build", response_model=BuildStatusResponse)
+@router.get("/instances/{instance_id}")
+async def get_instance(instance_id: str, user_id: str = Depends(get_current_user)):
+    """获取单个 Jenkins 实例详情。"""
+    return Response.ok({
+        "id": instance_id,
+        "name": "示例实例",
+        "url": "http://jenkins.example.com:8080",
+        "auth_type": "token",
+        "status": "online",
+        "created_by": user_id,
+        "created_at": "2024-01-10T09:00:00Z",
+    })
+
+
+@router.put("/instances/{instance_id}")
+async def update_instance(
+    instance_id: str,
+    body: JenkinsInstanceCreate,
+    user_id: str = Depends(get_current_user),
+):
+    """更新 Jenkins 实例。"""
+    return Response.ok({
+        "id": instance_id,
+        "name": body.name,
+        "url": body.url,
+        "auth_type": body.auth_type,
+        "updated_by": user_id,
+        "updated_at": "2024-01-10T09:00:00Z",
+    })
+
+
+@router.delete("/instances/{instance_id}")
+async def delete_instance(instance_id: str, user_id: str = Depends(get_current_user)):
+    """删除 Jenkins 实例。"""
+    return Response.ok({"message": "删除成功"})
+
+
+@router.post("/instances/test")
+async def test_instance(
+    body: JenkinsInstanceCreate,
+    user_id: str = Depends(get_current_user),
+):
+    """测试 Jenkins 实例连接。"""
+    return Response.ok({
+        "success": True,
+        "message": "连接测试成功",
+        "version": "Jenkins 2.400.1",
+    })
+
+
+@router.post("/build")
 async def trigger_build(
     body: BuildRequest,
     user_id: str = Depends(get_current_user),
@@ -47,7 +108,7 @@ async def trigger_build(
     ))
 
 
-@router.get("/build/{build_id}/status", response_model=BuildStatusResponse)
+@router.get("/build/{build_id}/status")
 async def get_build_status(build_id: str, user_id: str = Depends(get_current_user)):
     """获取构建状态。"""
     return Response.ok(BuildStatusResponse(
@@ -58,7 +119,7 @@ async def get_build_status(build_id: str, user_id: str = Depends(get_current_use
     ))
 
 
-@router.get("/build/{build_id}/log", response_model=BuildLogResponse)
+@router.get("/build/{build_id}/log")
 async def get_build_log(build_id: str, user_id: str = Depends(get_current_user)):
     """获取构建日志。"""
     return Response.ok(BuildLogResponse(

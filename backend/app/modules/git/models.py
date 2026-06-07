@@ -1,6 +1,6 @@
 """Git 集成模块 ORM 模型。"""
 
-from sqlalchemy import String, Integer, Text, Enum
+from sqlalchemy import String, Integer, Text, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
@@ -12,7 +12,7 @@ class BizGitRepo(Base, TimestampMixin):
     __tablename__ = "biz_git_repo"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    team_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="所属团队 ID")
+    team_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_team.id"), nullable=False, comment="所属团队 ID")
     name: Mapped[str] = mapped_column(String(100), nullable=False, comment="仓库名称")
     url: Mapped[str] = mapped_column(String(500), nullable=False, comment="Git 仓库地址")
     auth_type: Mapped[AuthType] = mapped_column(Enum(AuthType), nullable=False, comment="认证类型")
@@ -22,7 +22,6 @@ class BizGitRepo(Base, TimestampMixin):
     protected_branches: Mapped[list[str] | None] = mapped_column(Text, nullable=True, comment="受保护分支列表（JSON）")
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="创建人 ID")
 
-    team = relationship("BizTeam", back_populates="git_repos")
     user_auths = relationship("BizUserGitAuth", back_populates="repo", cascade="all, delete-orphan")
     jenkins_jobs = relationship("BizJenkinsJob", back_populates="repo", cascade="all, delete-orphan")
     change_items = relationship("BizChangeItem", back_populates="git_repo", foreign_keys="BizChangeItem.git_repo_id")
