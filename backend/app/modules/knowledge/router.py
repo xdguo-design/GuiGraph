@@ -82,10 +82,14 @@ async def create_knowledge_base(
 @router.get("/notes")
 async def list_notes(
     knowledge_base_id: int | None = None,
+    team_id: int | None = None,
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    items = await knowledge_service.list_notes(db, knowledge_base_id)
+    if team_id is not None:
+        items = await knowledge_service.list_notes_by_team(db, team_id)
+    else:
+        items = await knowledge_service.list_notes(db, knowledge_base_id)
     return Response.ok({"items": items})
 
 

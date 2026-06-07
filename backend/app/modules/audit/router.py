@@ -28,4 +28,4 @@ async def list_audit_logs(
         user_id=user_id, operation=operation,
         start_time=start_time, end_time=end_time,
     )
-    return Response.ok(PageResponse.paginate(items=items, total=total, page=page, page_size=page_size))
+    return PageResponse.paginate(items=items, total=total, page=page, page_size=page_size)

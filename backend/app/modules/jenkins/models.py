@@ -1,6 +1,6 @@
 """Jenkins 集成模块 ORM 模型。"""
 
-from sqlalchemy import String, Integer, Text, JSON, Enum
+from sqlalchemy import String, Integer, Text, JSON, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
@@ -35,8 +35,8 @@ class BizJenkinsJob(Base, TimestampMixin):
     __tablename__ = "biz_jenkins_job"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    repo_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="关联的 Git 仓库 ID")
-    jenkins_instance_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="Jenkins 实例 ID")
+    repo_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_git_repo.id"), nullable=False, comment="关联的 Git 仓库 ID")
+    jenkins_instance_id: Mapped[int] = mapped_column(Integer, ForeignKey("sys_jenkins_instance.id"), nullable=False, comment="Jenkins 实例 ID")
     job_name: Mapped[str] = mapped_column(String(200), nullable=False, comment="Job 全名")
     job_url: Mapped[str] = mapped_column(String(500), nullable=False, comment="Job URL")
     trigger_params: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="触发参数模板")

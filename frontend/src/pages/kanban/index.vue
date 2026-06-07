@@ -11,12 +11,21 @@
         <span class="month-label">{{ monthLabel }}</span>
       </div>
       <div class="toolbar-right">
+        <!-- 视图切换 -->
+        <el-segmented v-model="viewMode" :options="viewOptions">
+          <template #default="{ item }">
+            <el-icon style="margin-right: 4px">
+              <component :is="item.icon" />
+            </el-icon>
+            {{ item.label }}
+          </template>
+        </el-segmented>
         <el-select
           v-model="filterTeamId"
           placeholder="所有团队"
           clearable
           style="width: 220px"
-          @change="fetchKanban"
+          @change="handleTeamChange"
         >
           <el-option
             v-for="t in teams"
@@ -45,8 +54,8 @@
       </span>
     </div>
 
-    <!-- 月历 -->
-    <div v-loading="loading" class="calendar-wrapper">
+    <!-- 日历视图 -->
+    <div v-show="viewMode === 'calendar'" v-loading="loading" class="calendar-wrapper">
       <div class="calendar">
         <!-- 表头：周一~周日 -->
         <div class="cal-header">
@@ -100,6 +109,16 @@
       </div>
     </div>
 
+    <!-- Gantt 视图 -->
+    <div v-show="viewMode === 'gantt'" class="gantt-wrapper">
+      <KanbanGantt
+        :start-date="ganttStartDate"
+        :end-date="ganttEndDate"
+        :team-id="filterTeamId"
+        @tasks-loaded="handleTasksLoaded"
+      />
+    </div>
+
     <!-- 月度热力看板 -->
     <div class="heatmap-section">
       <div class="heatmap-title">月度热力看板</div>
@@ -124,11 +143,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, Plus, Document, Edit, CircleCheck, Warning, Histogram } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, Plus, Document, Edit, CircleCheck, Warning, Histogram, Calendar, Grid } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { dashboardAPI } from '@/api/dashboard'
+import KanbanGantt from '@/components/business/KanbanGantt.vue'
 
 const router = useRouter()
+
+// ── 视图模式 ──
+const viewMode = ref<'calendar' | 'gantt'>('calendar')
+const viewOptions = [
+  { label: '日历', value: 'calendar', icon: Calendar },
+  { label: 'Gantt', value: 'gantt', icon: Grid },
+]
 
 // ── 月份导航 ──
 const today = new Date()
@@ -140,9 +167,28 @@ const monthLabel = computed(() => {
   return `${y} 年 ${m} 月`
 })
 
+// Gantt 视图日期范围（显示当前月的前后各两周）
+const ganttStartDate = computed(() => {
+  const d = new Date(currentMonth.value)
+  d.setDate(d.getDate() - 14)
+  return formatDate(d)
+})
+
+const ganttEndDate = computed(() => {
+  const d = new Date(currentMonth.value)
+  d.setMonth(d.getMonth() + 1)
+  d.setDate(d.getDate() + 13)
+  return formatDate(d)
+})
+
 function formatMonth(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
+
+function formatDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function shiftMonth(delta: number) {
   const d = new Date(currentMonth.value)
   d.setMonth(d.getMonth() + delta)
@@ -181,6 +227,19 @@ async function fetchKanban() {
   } finally {
     loading.value = false
   }
+}
+
+function handleTeamChange() {
+  // 刷新当前视图数据
+  if (viewMode.value === 'calendar') {
+    fetchKanban()
+  }
+  // Gantt 视图通过 props 自动更新
+}
+
+function handleTasksLoaded(count: number) {
+  // Gantt 数据加载完成回调
+  console.log(`Gantt 视图加载了 ${count} 个任务`)
 }
 
 watch(currentMonth, fetchKanban)
@@ -314,15 +373,14 @@ function iconForType(t: string) {
   padding: 4px 2px;
 }
 /* 暗色模式（html.dark 是 element-plus 推荐做法） */
-:deep(html.dark) .kanban-page,
-:deep(.dark) .kanban-page {
-  --kanban-divider: var(--el-border-color-darker, #3a3f4b);
-  --kanban-cell-bg: var(--el-bg-color, #1f232b);
-  --kanban-page-bg: var(--el-bg-color-page, #15171c);
-  --kanban-text: var(--el-text-color-primary, #e6e8eb);
+.kanban-page {
+  --kanban-divider: var(--el-border-color-lighter, #e4e7ed);
+  --kanban-cell-bg: var(--el-bg-color, #ffffff);
+  --kanban-page-bg: var(--el-bg-color-page, #f5f7fa);
+  --kanban-text: var(--el-text-color-primary, #303133);
   --kanban-text-soft: var(--el-text-color-secondary, #909399);
-  --heat-empty: var(--el-fill-color, #2a2f3a);
-  --heat-text: var(--el-text-color-primary, #e6e8eb);
+  --heat-empty: var(--el-fill-color-light, #f0f2f5);
+  --heat-text: var(--el-text-color-primary, #303133);
   --heat-text-soft: var(--el-text-color-secondary, #909399);
 }
 
@@ -535,6 +593,11 @@ function iconForType(t: string) {
   opacity: 1;
 }
 
+/* ── Gantt 包装 ── */
+.gantt-wrapper {
+  margin-bottom: 20px;
+}
+
 /* ── 热力图 ── */
 .heatmap-section {
   background: var(--kanban-cell-bg);
@@ -594,5 +657,22 @@ function iconForType(t: string) {
   .cal-row {
     min-height: 80px;
   }
+}
+</style>
+
+<style>
+/* 暗色模式 - 未 scoped 样式以确保正确的优先级 */
+html.dark .kanban-page,
+html.gg-dark .kanban-page,
+.dark .kanban-page,
+.gg-dark .kanban-page {
+  --kanban-divider: var(--gg-border, #2a2a3a) !important;
+  --kanban-cell-bg: var(--gg-card, #1f232b) !important;
+  --kanban-page-bg: var(--gg-bg, #15171c) !important;
+  --kanban-text: var(--gg-text, #e0e0e0) !important;
+  --kanban-text-soft: var(--gg-text-muted, #888899) !important;
+  --heat-empty: var(--gg-border, #2a2a3a) !important;
+  --heat-text: var(--gg-text, #e0e0e0) !important;
+  --heat-text-soft: var(--gg-text-muted, #888899) !important;
 }
 </style>

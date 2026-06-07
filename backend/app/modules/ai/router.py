@@ -1,6 +1,7 @@
 """AI 能力模块路由。"""
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +33,11 @@ async def rag_search(
     db: AsyncSession = Depends(get_db),
 ):
     """RAG 语义搜索。"""
+    if not body.query or not body.query.strip():
+        return JSONResponse(
+            status_code=422,
+            content=Response.fail(message="查询内容不能为空", code="VALIDATION_ERROR"),
+        )
     results = await ai_service.rag_search(db, body.query, body.top_k)
     return Response.ok({"results": results})
 

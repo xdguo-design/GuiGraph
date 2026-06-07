@@ -4,6 +4,7 @@ from datetime import datetime
 from loguru import logger
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.modules.knowledge.models import KnowledgeBase, Note, NoteVersion
 
@@ -27,6 +28,32 @@ class KnowledgeService:
         await db.flush()
         return record.to_dict()
 
+    async def get_or_create_team_knowledge_base(
+        self, db: AsyncSession, team_id: int, team_name: str | None = None
+    ) -> dict:
+        """获取或自动创建团队知识库。"""
+        code = f"team_{team_id}_changes"
+        result = await db.execute(select(KnowledgeBase).where(KnowledgeBase.code == code))
+        kb = result.scalar_one_or_none()
+        if kb:
+            return kb.to_dict()
+
+        display_name = team_name or f"Team{team_id}"
+        kb = KnowledgeBase(
+            name=f"{display_name}团队变更知识库",
+            code=code,
+            description=f"团队({team_id})所有变更内容的自动沉淀知识库",
+            owner_id=team_id,
+            owner_type="team",
+            read_roles=["editor", "viewer", "auditor"],
+            write_roles=["system_admin", "dept_admin", "team_admin"],
+        )
+        db.add(kb)
+        await db.flush()
+        await db.refresh(kb)
+        logger.info(f"已自动创建团队知识库: {kb.name} (id={kb.id})")
+        return kb.to_dict()
+
     # ── 笔记 ──
 
     async def list_notes(self, db: AsyncSession, knowledge_base_id: int | None = None) -> list[dict]:
@@ -34,6 +61,17 @@ class KnowledgeService:
         if knowledge_base_id:
             q = q.where(Note.knowledge_base_id == knowledge_base_id)
         q = q.order_by(Note.order_num, Note.id)
+        rows = (await db.execute(q)).scalars().all()
+        return [r.to_dict() for r in rows]
+
+    async def list_notes_by_team(self, db: AsyncSession, team_id: int) -> list[dict]:
+        """根据团队 ID 查询该团队知识库下的所有笔记。"""
+        from app.modules.knowledge.models import KnowledgeBase
+        subq = select(KnowledgeBase.id).where(
+            KnowledgeBase.owner_id == team_id,
+            KnowledgeBase.owner_type == "team",
+        ).scalar_subquery()
+        q = select(Note).where(Note.knowledge_base_id.in_(subq)).order_by(Note.created_at.desc())
         rows = (await db.execute(q)).scalars().all()
         return [r.to_dict() for r in rows]
 

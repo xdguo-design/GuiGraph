@@ -61,6 +61,9 @@ class BizTeam(Base, TimestampMixin):
 
     department = relationship("BizDepartment", back_populates="teams")
     members = relationship("BizTeamMember", back_populates="team", cascade="all, delete-orphan")
+    domains = relationship("BizDomain", back_populates="team", cascade="all, delete-orphan")
+    applications = relationship("BizApplication", back_populates="team", cascade="all, delete-orphan")
+    components = relationship("BizComponent", back_populates="team", cascade="all, delete-orphan")
 
     def to_dict(self) -> dict:
         return {

@@ -120,56 +120,46 @@ async function fetchUpgradeDetail() {
   loading.value = true
   try {
     const id = route.params.id as string
-    // TODO: 调用实际 API
-    // const response = await upgradeAPI.get(id)
-    // upgrade.value = response.data
+    const data = await upgradeAPI.get(id)
 
-    // Mock 数据
+    // Map backend fields to template fields
     upgrade.value = {
-      id: 'UPG-2026-001',
-      version: 'v1.2.0',
-      status: 'success',
-      change_count: 2,
-      created_by: 'guoxudong',
-      created_at: '2026-06-05 14:00:00',
-      duration: '2m 30s',
-      changes: [
-        {
-          id: 'CHG-2026-001',
-          type: 'DB 变更',
-          content: '添加用户表昵称索引',
-          git_commit: 'a1b2c3d4',
-        },
-        {
-          id: 'CHG-2026-002',
-          type: 'API 变更',
-          content: '优化登录接口响应速度',
-          git_commit: 'e5f6g7h8',
-        },
-      ],
-      commits: [
-        {
-          id: 'commit_1',
-          hash: 'a1b2c3d4',
-          message: '添加用户表昵称索引',
-          author: 'guoxudong',
-          timestamp: '2026-06-05 14:01:00',
-        },
-        {
-          id: 'commit_2',
-          hash: 'e5f6g7h8',
-          message: '优化登录接口响应速度',
-          author: 'guoxudong',
-          timestamp: '2026-06-05 14:02:00',
-        },
-      ],
-      jenkins_build: {
-        job_name: 'guigraph-build',
-        build_number: 123,
-        status: 'SUCCESS',
-        timestamp: '2026-06-05 14:05:00',
-        log: '[INFO] Building guigraph...\n[INFO] Build success.\n[INFO] Deploying to production...',
-      },
+      id: data.id,
+      version: data.version_to,
+      status: data.status,
+      change_count: (data.change_items || []).length,
+      created_by: data.operator_id,
+      created_at: data.start_time,
+      duration: data.duration_sec ? formatDuration(data.duration_sec) : '-',
+      version_from: data.version_from,
+      version_to: data.version_to,
+      upgrade_type: data.upgrade_type,
+      end_time: data.end_time,
+      error_msg: data.error_msg,
+      log_details: data.log_details,
+      // Nested display data (backend stores IDs only)
+      changes: (data.change_items || []).map((id: string, idx: number) => ({
+        id,
+        type: '关联变更',
+        content: `变更 ID: ${id}`,
+        git_commit: (data.git_commits || [])[idx] || '',
+      })),
+      commits: (data.git_commits || []).map((hash: string, idx: number) => ({
+        id: `commit_${idx}`,
+        hash,
+        message: `Commit ${hash}`,
+        author: data.operator_id,
+        timestamp: data.start_time,
+      })),
+      jenkins_build: (data.jenkins_builds && data.jenkins_builds.length > 0)
+        ? {
+            job_name: `Job #${data.jenkins_builds[0]}`,
+            build_number: parseInt(data.jenkins_builds[0], 10) || 0,
+            status: data.status === 'success' ? 'SUCCESS' : 'FAILED',
+            timestamp: data.start_time,
+            log: data.log_details || '',
+          }
+        : null,
     }
   } catch (error) {
     ElMessage.error('获取升级详情失败')
@@ -177,6 +167,13 @@ async function fetchUpgradeDetail() {
   } finally {
     loading.value = false
   }
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`
+  const min = Math.floor(seconds / 60)
+  const sec = seconds % 60
+  return sec > 0 ? `${min}m ${sec}s` : `${min}m`
 }
 
 async function handleRollback() {

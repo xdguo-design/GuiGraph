@@ -19,6 +19,7 @@ class ChangeItemCreate(BaseModel):
     func_point_ids: Optional[list[str]] = Field(None, description="关联功能点 ID 数组")
     img_list: Optional[list[str]] = Field(None, description="图片 URL 数组")
     file_ref: Optional[list[str]] = Field(None, description="文档引用数组")
+    team_id: Optional[int] = Field(None, description="所属团队 ID")
 
 
 class ChangeItemUpdate(BaseModel):
@@ -30,6 +31,8 @@ class ChangeItemUpdate(BaseModel):
     func_point_ids: Optional[list[str]] = None
     img_list: Optional[list[str]] = None
     file_ref: Optional[list[str]] = None
+    team_id: Optional[int] = None
+    change_reason: Optional[ChangeReason] = None
 
 
 class ChangeItemResponse(BaseModel):

@@ -33,6 +33,9 @@ from app.modules.jenkins.router import router as jenkins_router
 from app.modules.organization.router import router as org_router
 from app.modules.user.admin_router import router as user_admin_router
 from app.modules.user.router import router as user_router
+from app.modules.business_line.router import router as business_line_router
+from app.modules.permissions.router import router as permissions_router
+from app.modules.product_line.router import router as product_line_router
 
 
 # 静态资源目录（头像上传等）
@@ -86,7 +89,10 @@ app.include_router(ai_mcp_router, prefix="/api/v1/ai/mcp", tags=["AI MCP"])
 app.include_router(knowledge_router, prefix="/api/v1/knowledge", tags=["知识库"])
 app.include_router(audit_router, prefix="/api/v1/audit", tags=["审计日志"])
 app.include_router(wiki_router, prefix="/api/v1/wiki", tags=["Wiki"])
-app.include_router(dictionary_router, prefix="/api/v1/dictionary", tags=["数据字典"])
+app.include_router(dictionary_router, prefix="/api/v1/dict", tags=["数据字典"])
+app.include_router(business_line_router, prefix="/api/v1/business-line", tags=["业务线"])
+app.include_router(permissions_router, prefix="/api/v1/permissions", tags=["权限矩阵"])
+app.include_router(product_line_router, prefix="/api/v1/product-line", tags=["产品线"])
 
 # 静态资源（头像等）
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")

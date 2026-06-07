@@ -2,8 +2,8 @@
 
 import json
 
-from sqlalchemy import String, Integer, DateTime, Text, Enum, JSON
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, DateTime, Text, Enum, JSON, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
 from app.shared.enums import ChangeType, ChangeReason, ChangeStatus
@@ -28,7 +28,7 @@ class BizChangeItem(Base, TimestampMixin):
     impact_apis: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, comment="GraphRAG 推断的影响接口")
     related_incidents: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, comment="关联的历史故障 ID 数组")
     rag_doc_id: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="关联 RAG 知识库 ID")
-    git_repo_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="关联 Git 仓库 ID")
+    git_repo_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("biz_git_repo.id"), nullable=True, comment="关联 Git 仓库 ID")
     git_branch_source: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="源分支")
     git_branch_target: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="目标分支")
     git_merge_commit: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="合并 Commit Hash")
@@ -38,6 +38,8 @@ class BizChangeItem(Base, TimestampMixin):
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="创建人 ID")
     approved_by: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="审批人 ID")
     approved_at: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True, comment="审批时间")
+
+    git_repo = relationship("BizGitRepo", back_populates="change_items", foreign_keys=[git_repo_id])
 
     def to_dict(self) -> dict:
         return {
@@ -61,4 +63,25 @@ class BizChangeItem(Base, TimestampMixin):
             "created_by": str(self.created_by),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class BizChangeDependency(Base, TimestampMixin):
+    """变更依赖关系表。"""
+    __tablename__ = "biz_change_dependency"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    from_change_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_change_item.id", ondelete="CASCADE"), nullable=False, comment="前置变更 ID")
+    to_change_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_change_item.id", ondelete="CASCADE"), nullable=False, comment="后置变更 ID")
+    dependency_type: Mapped[str] = mapped_column(String(10), default="FS", nullable=False, comment="依赖类型: FS (Finish-to-Start)")
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="创建人 ID")
+
+    def to_dict(self) -> dict:
+        return {
+            "id": str(self.id),
+            "from_change_id": str(self.from_change_id),
+            "to_change_id": str(self.to_change_id),
+            "dependency_type": self.dependency_type,
+            "created_by": str(self.created_by),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

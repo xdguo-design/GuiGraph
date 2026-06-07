@@ -1,7 +1,7 @@
 """MCP 管理模块 ORM 模型。"""
 
-from sqlalchemy import String, Integer, Enum, JSON, Text, Float
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, Enum, JSON, Text, Float, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
 from app.shared.enums import AuthType
@@ -45,7 +45,7 @@ class SysMcpToolAuth(Base, TimestampMixin):
     __tablename__ = "sys_mcp_tool_auth"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    mcp_server_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="MCP 服务器 ID")
+    mcp_server_id: Mapped[int] = mapped_column(Integer, ForeignKey("sys_mcp_server.id", ondelete="CASCADE"), nullable=False, comment="MCP 服务器 ID")
     tool_name: Mapped[str] = mapped_column(String(100), nullable=False, comment="工具名称")
     role: Mapped[str] = mapped_column(String(20), nullable=False, comment="允许的角色")
 

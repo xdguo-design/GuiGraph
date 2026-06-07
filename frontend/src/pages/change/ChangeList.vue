@@ -116,10 +116,18 @@ function getStatusTag(status: string) {
 async function loadData() {
   loading.value = true
   try {
-    // TODO: 实际调用 API
-    // const data = await changeAPI.list({ ...filters, ...pagination })
-    // changes.value = data.items
-    // pagination.total = data.total
+    const params = {
+      page: pagination.page,
+      page_size: pagination.pageSize,
+    }
+    if (filters.type) params.type = filters.type
+    if (filters.status) params.status = filters.status
+
+    const data: any = await changeAPI.list(params)
+    changes.value = data.items || []
+    pagination.total = data.total || 0
+  } catch (error) {
+    console.error('加载变更列表失败:', error)
   } finally {
     loading.value = false
   }
@@ -139,11 +147,13 @@ function handlePageChange() {
 }
 
 function viewDetail(id: string) {
-  // TODO: 路由跳转
+  // 跳转到变更详情页面
+  window.location.href = `/changes/${id}`
 }
 
 function editChange(id: string) {
-  // TODO: 路由跳转
+  // 跳转到变更编辑页面（复用创建页面）
+  window.location.href = `/changes/create?id=${id}`
 }
 
 onMounted(() => {

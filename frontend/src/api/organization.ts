@@ -26,6 +26,8 @@ export const orgAPI = {
 
   /** 团队列表（所有团队） */
   listTeams: () => request.get('/org/teams'),
+  /** 当前用户可访问的团队（演示/真实场景均可用） */
+  myTeams: () => request.get('/demo/kanban/teams'),
   /** 创建团队 */
   createTeam: (data: { name: string; code: string; department_id: string; description?: string }) =>
     request.post('/org/teams', data),

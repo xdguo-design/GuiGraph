@@ -10,7 +10,7 @@ export const knowledgeAPI = {
     request.post('/knowledge/bases', data),
 
   // ── 笔记 ──
-  listNotes: (params?: { knowledge_base_id?: number }) =>
+  listNotes: (params?: { knowledge_base_id?: number; team_id?: number }) =>
     request.get('/knowledge/notes', { params }),
   getNote: (noteId: number) => request.get(`/knowledge/notes/${noteId}`),
   createNote: (data: any) => request.post('/knowledge/notes', data),

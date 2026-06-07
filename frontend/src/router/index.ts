@@ -122,6 +122,48 @@ const routes = [
         component: () => import('@/pages/kanban/index.vue'),
         meta: { title: '看板', requiresAuth: true },
       },
+      // ── AI 智能检索 (P0) ──
+      {
+        path: 'ai-research',
+        name: 'AIResearch',
+        component: () => import('@/pages/ai/Research.vue'),
+        meta: { title: 'AI 智能检索', requiresAuth: true, requiresRole: ['admin', 'editor', 'viewer'] },
+      },
+      // ── 权限矩阵 (P0) ──
+      {
+        path: 'permissions',
+        name: 'Permissions',
+        component: () => import('@/pages/permissions/Matrix.vue'),
+        meta: { title: '权限矩阵', requiresAuth: true, requiresRole: ['admin', 'dept_admin'] },
+      },
+      // ── 审计日志 (P0) ──
+      {
+        path: 'audit-logs',
+        name: 'AuditLogs',
+        component: () => import('@/pages/audit/AuditLog.vue'),
+        meta: { title: '审计日志', requiresAuth: true, requiresRole: ['admin', 'auditor'] },
+      },
+      // ── 知识库笔记 (P0) ──
+      {
+        path: 'knowledge',
+        name: 'KnowledgeNotes',
+        component: () => import('@/pages/knowledge/KnowledgeNotes.vue'),
+        meta: { title: '知识库笔记', requiresAuth: true },
+      },
+      // ── 业务线 (P0) ──
+      {
+        path: 'business-line',
+        name: 'BusinessLine',
+        component: () => import('@/pages/business-line/index.vue'),
+        meta: { title: '业务线管理', requiresAuth: true, requiresRole: ['admin'] },
+      },
+      // ── 产品线 (P0) ──
+      {
+        path: 'product-line',
+        name: 'ProductLine',
+        component: () => import('@/pages/product-line/index.vue'),
+        meta: { title: '产品线管理', requiresAuth: true, requiresRole: ['admin'] },
+      },
     ],
   },
   // 兜底路由

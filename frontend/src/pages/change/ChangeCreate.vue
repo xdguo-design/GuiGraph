@@ -20,6 +20,26 @@
         style="margin-bottom: 16px"
       />
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px" :disabled="isEdit && change && change.status !== 'draft'">
+        <el-form-item label="所属版本" required>
+          <el-select v-model="form.version_id" placeholder="选择版本" filterable>
+            <el-option
+              v-for="v in versionOptions"
+              :key="v.value"
+              :label="v.label"
+              :value="v.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="所属团队" required>
+          <el-select v-model="form.team_id" placeholder="选择团队" filterable>
+            <el-option
+              v-for="t in myTeams"
+              :key="t.id"
+              :label="t.name"
+              :value="t.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="变更类型" required>
           <el-select v-model="form.change_type" placeholder="请选择">
             <el-option label="DB 变更" value="db" />
@@ -134,6 +154,8 @@ import { ElMessage, type UploadFile, type UploadRequestOptions, type UploadRawFi
 import { Calendar, Plus, Upload } from '@element-plus/icons-vue'
 import { changeAPI } from '@/api/change'
 import { attachmentAPI } from '@/api/attachment'
+import { organizationAPI } from '@/api/organization'
+import { upgradeAPI } from '@/api/upgrade'
 
 const route = useRoute()
 const router = useRouter()
@@ -148,6 +170,8 @@ const changeId = computed(() => route.params.id as string)
 const reportDate = computed(() => (route.query.date as string) || '')
 
 const form = reactive({
+  version_id: '1',
+  team_id: '',
   change_type: '',
   content: '',
   change_reason: '',
@@ -158,6 +182,8 @@ const form = reactive({
 })
 
 const rules = {
+  version_id: [{ required: true, message: '请选择版本', trigger: 'change' }],
+  team_id: [{ required: true, message: '请选择团队', trigger: 'change' }],
   change_type: [{ required: true, message: '请选择变更类型', trigger: 'change' }],
   content: [
     { required: true, message: '请输入变更内容', trigger: 'blur' },
@@ -172,6 +198,41 @@ const statusTextMap: Record<string, string> = {
   rejected: '已驳回',
   released: '已发布',
   rolled_back: '已回滚',
+}
+
+// ── 版本 / 团队选项 ──
+const versionOptions = ref<Array<{ value: string; label: string }>>([
+  { value: '1', label: 'v1.0.0' },
+])
+const myTeams = ref<Array<{ id: string; name: string }>>([])
+
+async function loadOptions() {
+  // 团队
+  try {
+    const teamRes: any = await organizationAPI.myTeams()
+    myTeams.value = (teamRes?.teams || teamRes?.items || []).map((t: any) => ({
+      id: String(t.team_id ?? t.id),
+      name: t.team_name ?? t.name,
+    }))
+    if (!form.team_id && myTeams.value.length > 0) {
+      form.team_id = myTeams.value[0].id
+    }
+  } catch (e) {
+    console.warn('加载团队失败：', e)
+  }
+  // 版本
+  try {
+    const upRes: any = await upgradeAPI.list({ page: 1, page_size: 50 })
+    const items = upRes?.items || []
+    if (items.length > 0) {
+      versionOptions.value = items.map((u: any) => ({
+        value: String(u.id),
+        label: u.version_to || u.version || `v${u.id}`,
+      }))
+    }
+  } catch (e) {
+    console.warn('加载版本失败：', e)
+  }
 }
 
 // ── 上传（图片 + 文档） ──
@@ -279,12 +340,14 @@ async function loadChange() {
 
     // 填充表单
     Object.assign(form, {
-      change_type: change.value.type,
+      version_id: String(change.value.version_id ?? '1'),
+      team_id: change.value.team_id ? String(change.value.team_id) : form.team_id,
+      change_type: change.value.change_type ?? change.value.type,
       content: change.value.content,
-      change_reason: change.value.reason,
+      change_reason: change.value.change_reason ?? change.value.reason,
       change_reason_detail: change.value.change_reason_detail || '',
-      effect_scope: change.value.impact || '',
-      related_requirement_no: change.value.requirement_id || '',
+      effect_scope: change.value.effect_scope || change.value.impact || '',
+      related_requirement_no: change.value.related_requirement_no || change.value.requirement_id || '',
       func_point_ids: change.value.func_point_ids || [],
     })
   } catch (error) {
@@ -309,7 +372,13 @@ async function handleSubmit() {
     const file_ref = fileList.value
       .filter((f) => f.url)
       .map((f) => f.url as string)
-    const payload = { ...form, img_list, file_ref }
+    const payload = {
+      ...form,
+      version_id: String(form.version_id),
+      team_id: form.team_id ? String(form.team_id) : undefined,
+      img_list,
+      file_ref,
+    }
 
     if (isEdit.value) {
       await changeAPI.update(changeId.value, payload)
@@ -335,6 +404,7 @@ function handleCancel() {
 }
 
 onMounted(() => {
+  loadOptions()
   loadChange()
 })
 </script>

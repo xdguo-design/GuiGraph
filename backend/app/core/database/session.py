@@ -52,10 +52,15 @@ async def init_db() -> None:
     import app.modules.attachment.models  # noqa: F401
     import app.modules.audit.models  # noqa: F401
     import app.modules.knowledge.models  # noqa: F401
+    import app.modules.git.models  # noqa: F401
+    import app.modules.jenkins.models  # noqa: F401
     import app.modules.ai.model_manager.models  # noqa: F401
     import app.modules.ai.skill.models  # noqa: F401
     import app.modules.ai.mcp.models  # noqa: F401
     import app.modules.wiki.models  # noqa: F401
+    import app.modules.business_line.models  # noqa: F401
+    import app.modules.product_line.models  # noqa: F401
+    import app.modules.dictionary.models  # noqa: F401
     from app.core.database.base import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

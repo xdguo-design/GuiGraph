@@ -1,6 +1,7 @@
 """Git 集成模块 ORM 模型。"""
 
-from sqlalchemy import String, Integer, Text, Enum, ForeignKey
+from datetime import datetime
+from sqlalchemy import String, Integer, Text, Enum, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
@@ -27,14 +28,18 @@ class BizGitRepo(Base, TimestampMixin):
     change_items = relationship("BizChangeItem", back_populates="git_repo", foreign_keys="BizChangeItem.git_repo_id")
 
     def to_dict(self) -> dict:
+        import json
         return {
             "id": str(self.id),
             "team_id": str(self.team_id),
             "name": self.name,
             "url": self.url,
-            "auth_type": self.auth_type.value,
+            "auth_type": self.auth_type.value if hasattr(self.auth_type, "value") else self.auth_type,
             "default_branch": self.default_branch,
             "created_by": str(self.created_by),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "protected_branches": json.loads(self.protected_branches) if self.protected_branches else [],
         }
 
 
@@ -44,13 +49,15 @@ class BizUserGitAuth(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="用户 ID")
-    repo_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="Git 仓库 ID")
+    repo_id: Mapped[int] = mapped_column(Integer, ForeignKey("biz_git_repo.id"), nullable=False, comment="Git 仓库 ID")
     granted_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="授权人 ID")
-    granted_at: Mapped = mapped_column(DateTime, nullable=False, comment="授权时间")
+    granted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="授权时间")
 
     repo = relationship("BizGitRepo", back_populates="user_auths")
 
-    __table_args__ = ({"UniqueConstraint": ("user_id", "repo_id", name="uk_user_repo")},)
+    __table_args__ = (
+        UniqueConstraint("user_id", "repo_id", name="uk_user_repo"),
+    )
 
     def to_dict(self) -> dict:
         return {

@@ -1,6 +1,6 @@
 """知识库笔记模块 ORM 模型。"""
 
-from sqlalchemy import String, Integer, Text, JSON, DateTime
+from sqlalchemy import String, Integer, Text, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TimestampMixin
@@ -37,12 +37,12 @@ class Note(Base, TimestampMixin):
     __tablename__ = "note"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    knowledge_base_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="所属知识库 ID")
+    knowledge_base_id: Mapped[int] = mapped_column(Integer, ForeignKey("knowledge_base.id", ondelete="CASCADE"), nullable=False, comment="所属知识库 ID")
     title: Mapped[str] = mapped_column(String(200), nullable=False, comment="笔记标题")
     content: Mapped[str] = mapped_column(Text, nullable=False, comment="笔记内容（Markdown）")
-    parent_note_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="父笔记 ID（嵌套目录）")
+    parent_note_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("note.id", ondelete="CASCADE"), nullable=True, comment="父笔记 ID（嵌套目录）")
     order_num: Mapped[int] = mapped_column(Integer, default=0, comment="排序序号")
-    tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default_factory=list, comment="标签列表")
+    tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, comment="标签列表")
     related_change_ids: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, comment="关联变更 ID 数组")
     related_func_point_ids: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, comment="关联功能点 ID 数组")
     author_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="作者 ID")
@@ -73,7 +73,7 @@ class NoteVersion(Base, TimestampMixin):
     __tablename__ = "note_version"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    note_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="笔记 ID")
+    note_id: Mapped[int] = mapped_column(Integer, ForeignKey("note.id", ondelete="CASCADE"), nullable=False, comment="笔记 ID")
     version_num: Mapped[int] = mapped_column(Integer, nullable=False, comment="版本号")
     title: Mapped[str] = mapped_column(String(200), nullable=False, comment="标题")
     content: Mapped[str] = mapped_column(Text, nullable=False, comment="内容")

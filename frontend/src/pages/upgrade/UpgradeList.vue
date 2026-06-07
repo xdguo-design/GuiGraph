@@ -128,43 +128,42 @@ function formatDate(date: string) {
 async function fetchData() {
   loading.value = true
   try {
-    // TODO: 调用实际 API
-    // const response = await upgradeAPI.list({
-    //   ...filters,
-    //   page: pagination.page,
-    //   pageSize: pagination.pageSize,
-    // })
-    // upgrades.value = response.data.items
-    // pagination.total = response.data.total
+    const params: Record<string, any> = {
+      page: pagination.page,
+      page_size: pagination.pageSize,
+    }
+    if (filters.version) params.version = filters.version
+    if (filters.status) params.status = filters.status
+    if (filters.dateRange && filters.dateRange.length === 2) {
+      params.start_time = filters.dateRange[0]
+      params.end_time = filters.dateRange[1]
+    }
 
-    // Mock 数据
-    upgrades.value = [
-      {
-        id: 'UPG-2026-001',
-        version: 'v1.2.0',
-        status: 'success',
-        change_count: 5,
-        created_by: 'guoxudong',
-        created_at: '2026-06-05 14:00:00',
-        duration: '2m 30s',
-      },
-      {
-        id: 'UPG-2026-002',
-        version: 'v1.1.9',
-        status: 'rolled_back',
-        change_count: 3,
-        created_by: 'test_user',
-        created_at: '2026-06-04 16:00:00',
-        duration: '1m 45s',
-      },
-    ]
-    pagination.total = 2
+    const response = await upgradeAPI.list(params)
+    // Map backend fields to table fields
+    upgrades.value = (response.items || []).map((item: any) => ({
+      id: item.id,
+      version: item.version_to,
+      status: item.status,
+      change_count: (item.change_items || []).length,
+      created_by: item.operator_id,
+      created_at: item.start_time,
+      duration: item.duration_sec ? formatDuration(item.duration_sec) : '-',
+    }))
+    pagination.total = response.total || 0
   } catch (error) {
     ElMessage.error('获取升级日志失败')
     console.error(error)
   } finally {
     loading.value = false
   }
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`
+  const min = Math.floor(seconds / 60)
+  const sec = seconds % 60
+  return sec > 0 ? `${min}m ${sec}s` : `${min}m`
 }
 
 function handleQuery() {

@@ -1,7 +1,8 @@
 """升级日志路由。"""
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, and_
+from fastapi.responses import JSONResponse
+from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps.auth import get_current_user
@@ -26,7 +27,10 @@ async def list_upgrade_logs(
     """查询升级日志。"""
     conditions = []
     if version:
-        conditions.append(SysUpgradeLog.version.contains(version))
+        conditions.append(
+            SysUpgradeLog.version_from.contains(version) |
+            SysUpgradeLog.version_to.contains(version)
+        )
     if status:
         conditions.append(SysUpgradeLog.status == status)
 
@@ -41,7 +45,7 @@ async def list_upgrade_logs(
     )
     rows = (await db.execute(q)).scalars().all()
     items = [r.to_dict() for r in rows]
-    return Response.ok(PageResponse.paginate(items=items, total=total, page=page, page_size=page_size))
+    return PageResponse.paginate(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.get("/{log_id}")
@@ -53,7 +57,10 @@ async def get_upgrade_detail(
     """获取升级详情。"""
     row = await db.get(SysUpgradeLog, log_id)
     if not row:
-        return Response.ok({"message": "未找到"})
+        return JSONResponse(
+            status_code=404,
+            content=Response.fail(message="未找到", code="NOT_FOUND"),
+        )
     return Response.ok(row.to_dict())
 
 
@@ -66,7 +73,10 @@ async def rollback_upgrade(
     """执行回滚。"""
     row = await db.get(SysUpgradeLog, log_id)
     if not row:
-        return Response.ok({"message": "未找到"})
+        return JSONResponse(
+            status_code=404,
+            content=Response.fail(message="未找到", code="NOT_FOUND"),
+        )
     row.status = "rolled_back"
     return Response.ok({"message": "回滚成功"})
 
@@ -80,5 +90,8 @@ async def export_upgrade_log(
     """导出升级日志。"""
     row = await db.get(SysUpgradeLog, log_id)
     if not row:
-        return Response.ok({"message": "未找到"})
+        return JSONResponse(
+            status_code=404,
+            content=Response.fail(message="未找到", code="NOT_FOUND"),
+        )
     return Response.ok({"message": "导出成功", "data": row.to_dict()})

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="business">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuiGraph · AI 贯穿业务线设计文档 (v1.1)</title>
+<style>
+:root {
+  --theme-primary: #1a5276; --theme-primary-light: #2980b9; --theme-primary-dark: #154360;
+  --theme-bg: #f8f9fa; --theme-bg-card: #ffffff; --theme-text: #2c3e50; --theme-text-muted: #7f8c8d;
+  --theme-border: #d5dbdb; --theme-code-bg: #f4f6f7;
+  --theme-accent: #e74c3c; --theme-success: #27ae60; --theme-warning: #f39c12; --theme-info: #3498db;
+  --theme-ai: #8e44ad; --theme-ai-light: #bb8fce;
+  --shadow: 0 2px 8px rgba(26,82,118,0.08);
+  --shadow-hover: 0 4px 16px rgba(26,82,118,0.12);
+}
+[data-theme="tech"] {
+  --theme-primary: #00d4ff; --theme-primary-light: #00b8e6; --theme-primary-dark: #0099cc;
+  --theme-bg: #0a0a0f; --theme-bg-card: #12121a; --theme-text: #e0e0e0; --theme-text-muted: #888899;
+  --theme-border: #2a2a3a; --theme-code-bg: #1a1a2a;
+  --theme-accent: #ff4757; --theme-success: #00ff88; --theme-warning: #ffa502; --theme-info: #00d4ff;
+  --theme-ai: #c678dd; --theme-ai-light: #e0a4f5;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--theme-bg); color: var(--theme-text); line-height: 1.7; }
+.container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+header.doc-header {
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-ai));
+  color: #fff; padding: 32px 24px; border-radius: 14px; margin-bottom: 32px;
+  box-shadow: var(--shadow-hover);
+}
+.doc-header h1 { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
+.doc-header .subtitle { opacity: 0.9; font-size: 14px; }
+.doc-header .meta { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px; font-size: 13px; }
+.doc-header .meta-item { display: flex; align-items: center; gap: 6px; }
+h2 { font-size: 22px; font-weight: 600; color: var(--theme-primary); margin: 36px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--theme-border); position: relative; }
+h2 .h2-num { display: inline-block; background: var(--theme-primary); color: #fff; width: 32px; height: 32px; line-height: 32px; text-align: center; border-radius: 8px; font-size: 15px; margin-right: 10px; }
+h3 { font-size: 17px; font-weight: 600; color: var(--theme-text); margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
+h3 .icon { width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 5px; color: #fff; font-size: 12px; flex-shrink: 0; }
+.icon-primary { background: var(--theme-primary); }
+.icon-ai { background: var(--theme-ai); }
+.icon-success { background: var(--theme-success); }
+.icon-warning { background: var(--theme-warning); }
+.icon-accent { background: var(--theme-accent); }
+.icon-info { background: var(--theme-info); }
+h4 { font-size: 14px; font-weight: 600; color: var(--theme-primary); margin: 14px 0 6px; }
+p { font-size: 14px; color: var(--theme-text); margin-bottom: 10px; }
+ul, ol { padding-left: 26px; font-size: 14px; margin-bottom: 12px; }
+li { margin-bottom: 4px; }
+strong { color: var(--theme-primary); }
+
+/* 状态卡片 */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.stat-card { background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 10px; padding: 18px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); }
+.stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; flex-shrink: 0; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--theme-primary); }
+.stat-label { font-size: 12px; color: var(--theme-text-muted); margin-top: 2px; }
+
+/* 表格 */
+.table-wrap { background: var(--theme-bg-card); border-radius: 10px; border: 1px solid var(--theme-border); overflow-x: auto; margin-bottom: 24px; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { background: var(--theme-bg); padding: 12px 14px; text-align: left; font-weight: 600; color: var(--theme-text); border-bottom: 2px solid var(--theme-border); white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--theme-border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(0,0,0,0.015); }
+
+/* 标签 */
+.tag { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; color: #fff; }
+.tag-p0 { background: var(--theme-accent); }
+.tag-p1 { background: var(--theme-warning); }
+.tag-p2 { background: var(--theme-info); }
+.tag-ai { background: var(--theme-ai); }
+.tag-done { background: var(--theme-success); }
+.tag-pending { background: var(--theme-text-muted); }
+
+/* 优先级 */
+.priority-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.priority-high { background: var(--theme-accent); }
+.priority-medium { background: var(--theme-warning); }
+.priority-low { background: var(--theme-info); }
+
+/* 卡片 */
+.detail-card { background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.detail-card.ai-themed { border-left: 4px solid var(--theme-ai); }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+
+/* 流程图 */
+.flow-diagram {
+  background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 10px;
+  padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+}
+.flow-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+.flow-node { background: var(--theme-bg); border: 2px solid var(--theme-primary); color: var(--theme-text); padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; min-width: 120px; text-align: center; }
+.flow-node.ai { background: linear-gradient(135deg, var(--theme-ai), var(--theme-ai-light)); color: #fff; border-color: var(--theme-ai); }
+.flow-node.success { background: var(--theme-success); color: #fff; border-color: var(--theme-success); }
+.flow-node.warning { background: var(--theme-warning); color: #fff; border-color: var(--theme-warning); }
+.flow-node.danger { background: var(--theme-accent); color: #fff; border-color: var(--theme-accent); }
+.flow-node.info { background: var(--theme-info); color: #fff; border-color: var(--theme-info); }
+.flow-arrow { color: var(--theme-text-muted); font-size: 18px; font-weight: 700; }
+
+/* 代码块 */
+pre, code { font-family: 'Consolas', 'Monaco', monospace; }
+code { background: var(--theme-code-bg); padding: 1px 6px; border-radius: 3px; font-size: 12.5px; }
+pre { background: var(--theme-code-bg); border: 1px solid var(--theme-border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 12.5px; line-height: 1.6; margin: 10px 0 16px; }
+pre code { background: transparent; padding: 0; }
+
+/* 进度条 */
+.progress-section { background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 10px; padding: 20px; margin-bottom: 24px; box-shadow: var(--shadow); }
+.progress-bar-bg { height: 14px; background: var(--theme-bg); border-radius: 7px; overflow: hidden; margin: 12px 0; }
+.progress-bar-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--theme-success), var(--theme-ai)); transition: width 0.5s; }
+.progress-pct { font-size: 18px; font-weight: 700; color: var(--theme-primary); }
+
+/* 主题切换 */
+.theme-switcher { position: fixed; bottom: 20px; right: 20px; background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 8px; padding: 10px 14px; box-shadow: var(--shadow-hover); z-index: 200; }
+.theme-switcher-title { font-size: 11px; color: var(--theme-text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.theme-options { display: flex; gap: 6px; }
+.theme-btn { width: 28px; height: 28px; border-radius: 5px; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; }
+.theme-btn:hover { transform: scale(1.1); }
+.theme-btn.active { border-color: var(--theme-primary); }
+.theme-btn.business { background: linear-gradient(135deg, #1a5276, #2980b9); }
+.theme-btn.tech { background: linear-gradient(135deg, #0a0a0f, #00d4ff); }
+
+/* 提示框 */
+.callout { background: linear-gradient(135deg, rgba(142,68,173,0.06), rgba(142,68,173,0.02)); border-left: 4px solid var(--theme-ai); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 13.5px; }
+.callout strong { color: var(--theme-ai); }
+.callout.danger { background: rgba(231,76,60,0.06); border-left-color: var(--theme-accent); }
+.callout.danger strong { color: var(--theme-accent); }
+.callout.warning { background: rgba(243,156,18,0.06); border-left-color: var(--theme-warning); }
+.callout.warning strong { color: var(--theme-warning); }
+.callout.success { background: rgba(39,174,96,0.06); border-left-color: var(--theme-success); }
+.callout.success strong { color: var(--theme-success); }
+
+/* 模态按钮组 */
+.btn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin: 12px 0; }
+.btn-mock {
+  background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; color: var(--theme-text); cursor: default; box-shadow: var(--shadow);
+}
+.btn-mock .btn-icon { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: var(--theme-ai); color: #fff; border-radius: 6px; font-size: 14px; margin-right: 8px; vertical-align: middle; }
+.btn-mock .btn-label { font-weight: 500; }
+.btn-mock .btn-desc { display: block; font-size: 11.5px; color: var(--theme-text-muted); margin-top: 4px; margin-left: 36px; }
+
+@media (max-width: 768px) {
+  .container { padding: 16px; }
+  .doc-header { padding: 20px; }
+  .doc-header h1 { font-size: 22px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .btn-grid { grid-template-columns: 1fr; }
+  table { font-size: 12px; }
+  th, td { padding: 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="doc-header">
+    <h1>🤖 GuiGraph · AI 贯穿业务线设计文档</h1>
+    <div class="subtitle">从"独立 AI 检索页"到"AI 渗透到每一个业务节点"的全栈改造方案</div>
+    <div class="meta">
+      <div class="meta-item">📌 版本 v1.1.0</div>
+      <div class="meta-item">📅 2026-06-07</div>
+      <div class="meta-item">👤 Dev Team</div>
+      <div class="meta-item">🎯 目标: 21 个业务节点 / 6 大 AI 场景 / 100% 覆盖</div>
+    </div>
+  </header>
+
+  <!-- 现状速览 -->
+  <h2><span class="h2-num">0</span>现状评估 & 痛点分析</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--theme-ai);">🧠</div>
+      <div><div class="stat-value">1 / 21</div><div class="stat-label">AI 已覆盖业务节点</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--theme-accent);">🪫</div>
+      <div><div class="stat-value">0</div><div class="stat-label">上下文感知能力</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--theme-warning);">📦</div>
+      <div><div class="stat-value">0</div><div class="stat-label">业务线专属 AI 配置</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--theme-info);">🔌</div>
+      <div><div class="stat-value">3</div><div class="stat-label">独立 RAG/MCP/Skill 模块</div></div>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <strong>⚠️ 核心痛点：</strong> 当前 AI 能力被孤立在 <code>/ai-research</code> 单页面内，业务用户在填写变更、看 Gantt、做审批时无法触达 AI；MCP / Skill / 模型管理也仅在 AI 页面内可见，缺少业务线维度的差异化策略。AI 没有真正"贯穿"业务。
+  </div>
+
+  <!-- 总体设计 -->
+  <h2><span class="h2-num">1</span>设计目标 & 设计原则</h2>
+  <h3><span class="icon icon-ai">★</span>三大设计目标</h3>
+  <ul>
+    <li><strong>随叫随到（In-context）</strong>：在每个业务页面，AI 都是可一键唤起的浮窗/侧边栏，识别当前页面上下文主动建议。</li>
+    <li><strong>可编排（Composable）</strong>：AI 能力以"场景（Scenario）"为最小单位，业务线/团队/用户三维度绑定，可热插拔。</li>
+    <li><strong>可观测（Observable）</strong>：所有 AI 调用均有日志、可统计成本、可收集反馈做 RLHF。</li>
+  </ul>
+
+  <h3><span class="icon icon-ai">★</span>五条设计原则</h3>
+  <ol>
+    <li><strong>不替代人：</strong>AI 提供建议与摘要，决策与终审仍由人完成。</li>
+    <li><strong>权限最小化：</strong>AI 调用受 RBAC 控制；不同角色看到的 AI 能力不同。</li>
+    <li><strong>数据可溯源：</strong>所有 AI 回答必须带引用的原文/链接（"基于以下 3 条变更..."）。</li>
+    <li><strong>降级友好：</strong>当 RAG/模型不可用时，自动降级为关键词检索 + 模板填充，业务不中断。</li>
+    <li><strong>成本可控：</strong>按业务线预算限额；超限自动降级到低成本模型。</li>
+  </ol>
+
+  <!-- 架构图 -->
+  <h2><span class="h2-num">2</span>整体架构（自上而下）</h2>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-node">21 个业务节点</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node ai">AI 浮窗 (全局)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node ai">场景路由器</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node">5 大预置场景</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node info">MCP 工具</div>
+      <div class="flow-node info">Skill 知识</div>
+      <div class="flow-node info">RAG 检索</div>
+      <div class="flow-node info">模型管理</div>
+      <div class="flow-node info">权限</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node">业务线维度</div>
+      <div class="flow-node">团队维度</div>
+      <div class="flow-node">用户维度</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node success">个性化配置生效</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node warning">调用日志</div>
+      <div class="flow-node warning">成本监控</div>
+      <div class="flow-node warning">效果回灌</div>
+    </div>
+  </div>
+
+  <!-- 6 大 AI 场景 -->
+  <h2><span class="h2-num">3</span>六大 AI 场景（最小能力单元）</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>场景 code</th><th>场景名</th><th>典型 Prompt</th><th>使用频次</th><th>优先级</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td><td><code>search</code></td><td>全局智能检索</td>
+          <td>"跨业务线、变更、版本、文档的语义检索"</td><td>★★★★★</td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>2</td><td><code>summarize</code></td><td>变更摘要</td>
+          <td>"把一份变更/工单压缩为 3-5 句摘要，并指出风险"</td><td>★★★★★</td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>3</td><td><code>impact</code></td><td>影响面推断</td>
+          <td>"基于变更内容推断潜在影响表/接口/服务"</td><td>★★★★</td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>4</td><td><code>risk_check</code></td><td>变更风险检查</td>
+          <td>"检查 SQL/接口/配置变更的常见风险点"</td><td>★★★★</td><td><span class="tag tag-p0">P0</span></td>
+        </tr>
+        <tr>
+          <td>5</td><td><code>commit_msg</code></td><td>提交信息生成</td>
+          <td>"把变更内容翻译为标准 commit message"</td><td>★★★</td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>6</td><td><code>weekly_digest</code></td><td>个人/团队周报</td>
+          <td>"基于本周变更、构建、审计生成周报"</td><td>★★</td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 业务节点渗透 -->
+  <h2><span class="h2-num">4</span>21 个业务节点 × AI 渗透点（核心交付物）</h2>
+  <div class="callout">
+    <strong>渗透方式：</strong>共 4 种 UI 模式（<code>F1 全局浮窗</code> / <code>F2 行内按钮</code> / <code>F3 智能卡片</code> / <code>F4 后台 worker</code>），下表标注每一种。
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>业务节点</th><th>路径</th><th>AI 渗透点</th><th>模式</th><th>优先级</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td><td>登录 / 注册</td><td>/login /apply</td>
+          <td>AI 审核注册申请（异常账号检测）</td><td><code>F4</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>2</td><td>仪表盘</td><td>/dashboard</td>
+          <td>AI 智能周报 + 异常指标解释 + 风险预警</td><td><code>F3</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>3</td><td>看板日历</td><td>/kanban (calendar)</td>
+          <td>AI 团队负载异常告警 / 风险日历聚合</td><td><code>F3</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>4</td><td>Gantt 视图</td><td>/kanban (gantt)</td>
+          <td>AI 依赖关系自动推断 / 智能排期建议</td><td><code>F2</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>5</td><td>变更列表</td><td>/changes</td>
+          <td>AI 摘要列（每行后挂 1 行 AI 摘要）</td><td><code>F3</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>6</td><td>新建变更</td><td>/changes/create</td>
+          <td>实时 AI 撰写 / SQL 风险 / 影响面推断 / commit 草稿</td><td><code>F2</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>7</td><td>变更详情</td><td>/changes/:id</td>
+          <td>AI 摘要 / 相似变更 / 关联故障 / 风险评分</td><td><code>F3</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>8</td><td>变更审批</td><td>/changes/:id/approve</td>
+          <td>AI 预审报告 + 风险评分 + 是否建议放行</td><td><code>F3</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>9</td><td>组织架构</td><td>/org</td>
+          <td>AI 团队效能诊断 / 编制合理性建议</td><td><code>F3</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>10</td><td>用户中心</td><td>/user</td>
+          <td>AI 个人工作画像（工单/提交/学习）</td><td><code>F3</code></td><td><span class="tag tag-p2">P2</span></td>
+        </tr>
+        <tr>
+          <td>11</td><td>Git 仓库</td><td>/git</td>
+          <td>AI commit message 生成 / 分支冲突诊断</td><td><code>F2</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>12</td><td>Jenkins</td><td>/jenkins</td>
+          <td>AI 构建失败根因 / 流水线优化建议</td><td><code>F3</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>13</td><td>升级日志</td><td>/upgrades</td>
+          <td>AI 自动发布说明 / 回滚建议</td><td><code>F2</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>14</td><td>业务线</td><td>/business-line</td>
+          <td>AI 业务线画像 / 健康度评分</td><td><code>F3</code></td><td><span class="tag tag-p2">P2</span></td>
+        </tr>
+        <tr>
+          <td>15</td><td>产品线</td><td>/product-line</td>
+          <td>AI 产品线 KPI 异常检测</td><td><code>F3</code></td><td><span class="tag tag-p2">P2</span></td>
+        </tr>
+        <tr>
+          <td>16</td><td>权限矩阵</td><td>/permissions</td>
+          <td>AI 权限风险审计 / 越权建议</td><td><code>F3</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>17</td><td>审计日志</td><td>/audit-logs</td>
+          <td>AI 异常行为检测 / 自动归因</td><td><code>F4</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>18</td><td>知识库</td><td>/knowledge</td>
+          <td>AI 知识问答 / 自动总结 / 关联推荐</td><td><code>F2</code></td><td><span class="tag tag-ai">P0</span></td>
+        </tr>
+        <tr>
+          <td>19</td><td>Wiki 文档</td><td>/wiki</td>
+          <td>AI 文档摘要 / 智能补全 / 翻译</td><td><code>F2</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+        <tr>
+          <td>20</td><td>字典管理</td><td>/dict</td>
+          <td>AI 自动归类 / 命名规范建议</td><td><code>F2</code></td><td><span class="tag tag-p2">P2</span></td>
+        </tr>
+        <tr>
+          <td>21</td><td>版本合并</td><td>/version-merge</td>
+          <td>AI 合并冲突解决方案 / 风险评估</td><td><code>F2</code></td><td><span class="tag tag-p1">P1</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- UI 模式 -->
+  <h2><span class="h2-num">5</span>UI 渗透模式（4 种）</h2>
+
+  <h3><span class="icon icon-primary">F1</span>全局 AI 浮窗（Floating Copilot）</h3>
+  <div class="detail-card ai-themed">
+    <p>位于右下方，所有业务页面常驻。点击展开：</p>
+    <ul>
+      <li>识别当前路由 → 自动选择默认场景</li>
+      <li>支持 @ 唤起特定场景（<code>@risk 帮我查一下这个 SQL</code>）</li>
+      <li>支持 / 唤起快捷命令（<code>/summary</code>、<code>/impact</code>）</li>
+      <li>对话历史按业务节点归档</li>
+    </ul>
+    <pre><code>// frontend/src/components/ai/AIFloatingCopilot.vue
+&lt;template&gt;
+  &lt;div class="ai-copilot" :class="{ open }"&gt;
+    &lt;el-button class="trigger" circle @click="open = !open"&gt;
+      &lt;el-icon&gt;&lt;MagicStick /&gt;&lt;/el-icon&gt;
+    &lt;/el-button&gt;
+    &lt;transition name="el-fade-in"&gt;
+      &lt;div v-if="open" class="panel"&gt;
+        &lt;AiChatPanel :scenario="currentScenario" /&gt;
+      &lt;/div&gt;
+    &lt;/transition&gt;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+  </div>
+
+  <h3><span class="icon icon-primary">F2</span>行内 AI 按钮（Inline AI Button）</h3>
+  <div class="detail-card ai-themed">
+    <p>嵌入到表单字段旁，触发后弹出小气泡/抽屉。例：</p>
+    <div class="btn-grid">
+      <div class="btn-mock"><span class="btn-icon">✨</span><span class="btn-label">AI 撰写</span><span class="btn-desc">在变更内容输入框旁</span></div>
+      <div class="btn-mock"><span class="btn-icon">🛡</span><span class="btn-label">风险检查</span><span class="btn-desc">在 SQL 输入框旁</span></div>
+      <div class="btn-mock"><span class="btn-icon">🧩</span><span class="btn-label">影响面</span><span class="btn-desc">在变更类型选完后</span></div>
+      <div class="btn-mock"><span class="btn-icon">📝</span><span class="btn-label">生成 commit</span><span class="btn-desc">在 Git 提交前</span></div>
+    </div>
+  </div>
+
+  <h3><span class="icon icon-primary">F3</span>智能卡片（Insight Card）</h3>
+  <div class="detail-card ai-themed">
+    <p>出现在列表/详情页的"AI 洞察"区域，通常以折叠面板/抽屉形式展示。</p>
+    <ul>
+      <li>Dashboard: "本周团队 X 出现 5 次失败回滚，主要原因是……"</li>
+      <li>变更详情: "与变更 #123、#456 高度相似，曾引发过生产事故 INC-2025-08-12"</li>
+      <li>审批页: "建议批准（综合风险评分 28/100，低于阈值 60）"</li>
+    </ul>
+  </div>
+
+  <h3><span class="icon icon-primary">F4</span>后台 Worker（Background AI Worker）</h3>
+  <div class="detail-card ai-themed">
+    <p>无需 UI 交互，AI 定时/触发式执行，例如：</p>
+    <ul>
+      <li>每 10 分钟扫描异常行为日志并发送站内信</li>
+      <li>构建失败时自动分析根因并推送给负责人</li>
+      <li>每周一 09:00 自动生成上周周报</li>
+    </ul>
+  </div>
+
+  <!-- 数据流 -->
+  <h2><span class="h2-num">6</span>核心数据流（举 3 个最关键场景）</h2>
+
+  <h3><span class="icon icon-ai">★</span>场景 A：变更创建时的 AI 辅助（最常用）</h3>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-node">用户在变更内容框输入</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node ai">前端 800ms debounce</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node">POST /ai/scenario/impact</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node info">binding 解析</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node info">RAG 检索相似变更</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node info">Skill 注入</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node ai">LLM 生成建议</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node success">结构化返回</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node success">前端气泡展示</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node warning">用户采纳/忽略</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node warning">反馈日志</div>
+    </div>
+  </div>
+  <pre><code>// 后端伪代码 (FastAPI)
+@router.post("/ai/scenario/{code}/invoke")
+async def invoke_scenario(code: str, body: ScenarioInvoke, user=Depends(get_current_user)):
+    # 1. 解析场景
+    scenario = await load_scenario(code)
+    # 2. 解析 binding（业务线→团队→用户，按 priority 取最高优先级）
+    binding = await resolve_binding(user, body.context)
+    # 3. 注入 RAG 上下文
+    docs = await rag_search(body.query, top_k=5, filter=binding.filter)
+    # 4. 注入 Skill
+    skills = await load_skill(binding.skill_ids)
+    # 5. 调 LLM
+    answer = await llm_call(scenario.system_prompt, body, docs, skills, model=binding.model_id)
+    # 6. 落库
+    await log_ai_call(user.id, code, body, answer, cost=...)
+    return answer</code></pre>
+
+  <h3><span class="icon icon-ai">★</span>场景 B：Gantt 智能排期</h3>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-node">用户在 Gantt 点击"AI 排期"</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node ai">抓取当前月所有变更</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node">送入 LLM</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node info">提取依赖</div>
+      <div class="flow-node info">识别冲突</div>
+      <div class="flow-node info">检测团队负载</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node success">建议重排方案</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node success">diff 可视化</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node warning">用户一键应用</div>
+    </div>
+  </div>
+
+  <h3><span class="icon icon-ai">★</span>场景 C：周报自动生成</h3>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-node warning">定时任务 周一 09:00</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node">拉取用户/团队上周数据</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node ai">LLM 总结</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-node success">站内信推送</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node success">Dashboard 卡片</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node success">订阅邮箱（可选）</div>
+    </div>
+  </div>
+
+  <!-- 数据模型 -->
+  <h2><span class="h2-num">7</span>数据模型（关键表）</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>表</th><th>说明</th><th>关键字段</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ai_scenario</code></td>
+          <td>场景定义（5+ 个）</td>
+          <td>code / name / system_prompt / skill_ids / model_id</td>
+        </tr>
+        <tr>
+          <td><code>ai_scenario_binding</code></td>
+          <td>业务线/团队/用户 × 场景绑定</td>
+          <td>scenario_id / business_line_id / team_id / user_id / priority</td>
+        </tr>
+        <tr>
+          <td><code>ai_search_index</code></td>
+          <td>业务实体 → RAG 文档映射</td>
+          <td>entity_type / entity_id / content / rag_doc_id / is_dirty</td>
+        </tr>
+        <tr>
+          <td><code>ai_search_log</code></td>
+          <td>调用日志（成本 + 反馈）</td>
+          <td>user_id / scenario_code / query / answer / tokens / cost / feedback</td>
+        </tr>
+        <tr>
+          <td><code>ai_model_config</code></td>
+          <td>多模型接入（OpenAI / Claude / 通义 / 本地）</td>
+          <td>provider / model_type / api_key_enc / env_tags / cost_per_1k</td>
+        </tr>
+        <tr>
+          <td><code>ai_skill</code></td>
+          <td>领域知识包（Python / DBA / 安全）</td>
+          <td>name / skill_file / allowed_roles / config</td>
+        </tr>
+        <tr>
+          <td><code>sys_mcp_server</code></td>
+          <td>MCP 工具服务器</td>
+          <td>type / command / url / tools / status</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12.5px;color:var(--theme-text-muted);">完整 DDL 见 <a href="../../backend/migrations/002_real_data_and_ai_hooks.sql">backend/migrations/002_real_data_and_ai_hooks.sql</a>。</p>
+
+  <!-- 业务线维度 -->
+  <h2><span class="h2-num">8</span>业务线 × AI 策略（差异化配置）</h2>
+  <p>同一条 AI 能力，不同业务线需要不同的风格与红线：</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>业务线</th><th>默认模型</th><th>开启场景</th><th>关闭场景</th><th>特殊配置</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>支付 / 金融</td>
+          <td>Claude-3.5-Sonnet</td>
+          <td>risk_check、impact、search</td>
+          <td>无</td>
+          <td>所有回答必须带"风险提示"段落</td>
+        </tr>
+        <tr>
+          <td>基础设施</td>
+          <td>通义千问-Max</td>
+          <td>risk_check、commit_msg、search</td>
+          <td>无</td>
+          <td>绑定 DBA / SRE skill</td>
+        </tr>
+        <tr>
+          <td>内部 OA</td>
+          <td>通义千问-Plus（成本优先）</td>
+          <td>summarize、weekly_digest、search</td>
+          <td>risk_check</td>
+          <td>月预算 ≤ ¥500</td>
+        </tr>
+        <tr>
+          <td>前端 / 体验</td>
+          <td>GPT-4o-Mini</td>
+          <td>search、commit_msg、summarize</td>
+          <td>impact</td>
+          <td>默认走英文 commit</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 实施路线 -->
+  <h2><span class="h2-num">9</span>实施路线（4 个迭代）</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>迭代</th><th>目标</th><th>关键交付</th><th>预计工作量</th><th>价值</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>I1 · v1.1.0</strong>（本次）</td>
+          <td>基础设施 + 1 业务节点</td>
+          <td>① 全局 AI 浮窗 (F1)<br>② 变更创建 AI 撰写 / 风险检查 (F2)<br>③ 6 大场景定义 + binding 模型<br>④ ai_search_index 自动同步</td>
+          <td>~ 3 人周</td>
+          <td><span class="tag tag-ai">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>I2 · v1.2.0</strong></td>
+          <td>变更全链路 AI 化</td>
+          <td>① 变更详情 AI 摘要 / 相似 (F3)<br>② 审批页 AI 预审报告 (F3)<br>③ Gantt 智能排期 (F2)<br>④ 升级日志自动发布说明 (F2)</td>
+          <td>~ 4 人周</td>
+          <td><span class="tag tag-ai">高</span></td>
+        </tr>
+        <tr>
+          <td><strong>I3 · v1.3.0</strong></td>
+          <td>知识 / Git / Jenkins 链路</td>
+          <td>① 知识库 AI 问答 (F2)<br>② Git commit 智能生成 (F2)<br>③ Jenkins 失败诊断 (F3)<br>④ Wiki 自动摘要 (F2)</td>
+          <td>~ 4 人周</td>
+          <td><span class="tag tag-ai">中</span></td>
+        </tr>
+        <tr>
+          <td><strong>I4 · v1.4.0</strong></td>
+          <td>智能体 / 后台 worker</td>
+          <td>① 周报自动生成 (F4)<br>② 审计异常检测 (F4)<br>③ 团队效能诊断 (F3)<br>④ 业务线健康度评分 (F3)</td>
+          <td>~ 5 人周</td>
+          <td><span class="tag tag-ai">中</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 风险 -->
+  <h2><span class="h2-num">10</span>风险 & 缓解</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>风险</th><th>影响</th><th>缓解措施</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AI 回答存在幻觉</td>
+          <td>高</td>
+          <td>强制要求回答带"引用"，UI 显眼展示；提供反馈按钮；高风险场景（金融/医疗）必须二次人工确认</td>
+        </tr>
+        <tr>
+          <td>外部模型 API 不稳定</td>
+          <td>中</td>
+          <td>多模型 fallback；本地 Ollama 兜底；限流 + 降级提示</td>
+        </tr>
+        <tr>
+          <td>成本失控</td>
+          <td>中</td>
+          <td>业务线 / 用户维度预算；超限降级到低成本模型；按日对账</td>
+        </tr>
+        <tr>
+          <td>敏感数据出域</td>
+          <td>高</td>
+          <td>外发前 PII 脱敏；金融业务走私有化部署；提供审计日志</td>
+        </tr>
+        <tr>
+          <td>用户抵触（担心被替代）</td>
+          <td>中</td>
+          <td>对外口径"AI 助手"；保留"忽略建议"选项；正面激励采纳率</td>
+        </tr>
+        <tr>
+          <td>RAGFlow / Ollama 部署复杂</td>
+          <td>中</td>
+          <td>提供 docker-compose 一键起；演示环境允许无 RAG 跑通（直接走 DB LIKE 检索）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 验收 -->
+  <h2><span class="h2-num">11</span>本次（I1）验收标准</h2>
+  <ul>
+    <li>✅ 全局浮窗在所有路由常驻；点击展开后 1s 内显示</li>
+    <li>✅ 变更创建表单：输入"修改订单表的 user_id 字段类型"后 1.5s 内返回 impact + risk_check 建议</li>
+    <li>✅ 业务线 / 团队 / 用户维度的 binding 配置可在 admin 后台修改</li>
+    <li>✅ <code>ai_search_log</code> 表中能看到每次调用的 user / cost / latency / feedback</li>
+    <li>✅ AI 浮窗可被禁用（管理后台关闭组织级 AI）</li>
+    <li>✅ RAG 服务不可用时，自动降级为 SQLite LIKE 检索，不影响主流程</li>
+  </ul>
+
+  <!-- 立即可做 -->
+  <h2><span class="h2-num">12</span>本次 PR 已落地的能力</h2>
+  <div class="callout success">
+    <strong>✅ 已完成（v1.1.0）：</strong>
+    <ul style="margin-top:6px;">
+      <li>变更/审批/看板 4 个写接口从 mock 升级为真实 DB 写入（解决"看板任务点进去是空的"）</li>
+      <li>3 张 AI 基础设施表 + 4 张索引 + 1 个触发器已写入迁移脚本 002</li>
+      <li>5 个默认 AI 场景已预置</li>
+      <li>SQL 变更清单文档 <a href="../database/SQL-CHANGELOG.md">docs/database/SQL-CHANGELOG.md</a></li>
+    </ul>
+  </div>
+  <div class="callout warning">
+    <strong>⏭️ 下次迭代（v1.2.0）：</strong>
+    <ul style="margin-top:6px;">
+      <li>实现 <code>AIFloatingCopilot.vue</code> 浮窗组件 + 场景路由器</li>
+      <li>实现 <code>POST /ai/scenario/{code}/invoke</code> 端点</li>
+      <li>对接 RAGFlow / Ollama（如已部署）</li>
+    </ul>
+  </div>
+
+  <hr style="margin: 32px 0; border: 0; border-top: 2px dashed var(--theme-border);">
+  <p style="text-align: center; color: var(--theme-text-muted); font-size: 12.5px;">
+    © 2026 GuiGraph Project · 让 AI 不再是孤立功能，而是与业务共生的工作伙伴。
+  </p>
+
+</div>
+
+<div class="theme-switcher">
+  <div class="theme-switcher-title">主题</div>
+  <div class="theme-options">
+    <div class="theme-btn business active" onclick="setTheme('business')" title="商务"></div>
+    <div class="theme-btn tech" onclick="setTheme('tech')" title="科技"></div>
+  </div>
+</div>
+
+<script>
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.' + theme).classList.add('active');
+}
+</script>
+</body>
+</html>

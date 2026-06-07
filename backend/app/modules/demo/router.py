@@ -163,16 +163,32 @@ async def seed_demo_data(current_user: SysUser = Depends(get_current_user)):
         if not change_count.scalars().first():
             now = datetime.utcnow()
             alice = users.get("alice")
-            carol = users.get("carol")
+            carol = users.get("david")  # 后端负责人
             statuses = [ChangeStatus.DRAFT, ChangeStatus.APPROVED, ChangeStatus.RELEASED, ChangeStatus.ROLLED_BACK]
+            fe_team = teams.get("FE")
+            be_team = teams.get("BE")
+            qa_team = teams.get("QA")
+            ops_team = teams.get("OPS")
+            team_pool = [t for t in (fe_team, be_team, qa_team, ops_team) if t]
             for i, (title, ctype, reason) in enumerate(CHANGE_TITLES):
+                # 偶数交给 Alice(前)/FE；奇数交给 Carol(后)/BE；其余随机团队
+                if i % 2 == 0:
+                    creator = alice
+                    team = fe_team
+                else:
+                    creator = carol
+                    team = be_team
+                # 每 4 条轮换一次团队，制造多团队混合效果
+                if team_pool and i % 4 == 3:
+                    team = team_pool[i % len(team_pool)]
                 ch = BizChangeItem(
                     version_id=1,  # 默认版本
                     change_type=ChangeType(ctype.lower()),
                     content=title,
                     change_reason=ChangeReason(reason.lower()),
                     status=random.choice(statuses),
-                    created_by=(alice.id if alice and i % 2 == 0 else (carol.id if carol else current_user.id)),
+                    created_by=(creator.id if creator else current_user.id),
+                    team_id=(team.id if team else None),
                     created_at=now - timedelta(days=i, hours=random.randint(0, 23)),
                 )
                 session.add(ch)

@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 import hashlib
 
 from fastapi import APIRouter, Depends, Request, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy import select, func, true, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +11,7 @@ from app.core.deps.auth import get_current_user
 from app.core.database.session import get_db
 from app.core.security.jwt import verify_token
 from app.core.utils.response import Response
-from app.modules.change.models import BizChangeItem
+from app.modules.change.models import BizChangeItem, BizChangeDependency
 from app.modules.organization.models import BizTeam, BizTeamMember
 from app.modules.upgrade.models import SysUpgradeLog
 from app.modules.user.models import SysUser
@@ -162,7 +163,10 @@ async def get_kanban(
     try:
         month_start, month_end = _parse_month(month)
     except (ValueError, TypeError):
-        return Response.error("月份格式错误，应为 YYYY-MM", code="BAD_REQUEST")
+        return JSONResponse(
+            status_code=400,
+            content=Response.fail(message="月份格式错误，应为 YYYY-MM", code="BAD_REQUEST"),
+        )
 
     # 1) 团队列表：管理员看全量；普通用户看自己所在的团队
     team_query = select(BizTeam).order_by(BizTeam.id.asc())
@@ -275,4 +279,138 @@ async def get_kanban(
         "teams": teams,
         "items_by_day": items_by_day,
         "heatmap": heatmap,
+    })
+
+
+# ── Gantt 图 ──
+
+
+@router.get("/gantt")
+async def get_gantt(
+    request: Request,
+    start_date: str = Query(..., description="开始日期 YYYY-MM-DD"),
+    end_date: str = Query(..., description="结束日期 YYYY-MM-DD"),
+    team_id: str = Query("", description="可选：团队筛选"),
+    current_user: SysUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取 Gantt 图数据：任务列表和依赖关系。
+
+    管理员查看全量变更；普通用户仅查看自己创建的变更。
+    当变更没有 team_id 时，按创建人的主团队补齐，以便看板按团队着色。
+    """
+    user_id = current_user.id
+    role = _user_role_from_request(request)
+    is_admin = role in ("system_admin", "dept_admin", "team_admin")
+
+    try:
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        return JSONResponse(
+            status_code=400,
+            content=Response.fail(message="日期格式错误，应为 YYYY-MM-DD", code="BAD_REQUEST"),
+        )
+
+    # 1) 查询指定日期范围内的变更
+    change_query = (
+        select(BizChangeItem)
+        .where(
+            BizChangeItem.created_at >= start_dt,
+            BizChangeItem.created_at <= end_dt.replace(hour=23, minute=59, second=59),
+        )
+        .order_by(BizChangeItem.created_at.asc())
+    )
+
+    # 权限过滤
+    if not is_admin:
+        change_query = change_query.where(BizChangeItem.created_by == user_id)
+
+    # 团队过滤
+    if team_id:
+        try:
+            change_query = change_query.where(BizChangeItem.team_id == int(team_id))
+        except ValueError:
+            pass
+
+    changes_result = await db.execute(change_query)
+    changes = changes_result.scalars().all()
+
+    # 2) 补齐 team_id：未填的变更按创建人主团队推断
+    creator_team_cache: dict[int, int | None] = {}
+
+    async def resolve_team_id(creator_id: int) -> int | None:
+        if creator_id in creator_team_cache:
+            return creator_team_cache[creator_id]
+        m_result = await db.execute(
+            select(BizTeamMember.team_id)
+            .where(BizTeamMember.user_id == creator_id)
+            .order_by(BizTeamMember.id.asc())
+            .limit(1)
+        )
+        tid = m_result.scalar_one_or_none()
+        creator_team_cache[creator_id] = tid
+        return tid
+
+    effective_team_ids: set[int] = set()
+    for c in changes:
+        if c.team_id is None:
+            c.team_id = await resolve_team_id(c.created_by)
+        if c.team_id is not None:
+            effective_team_ids.add(c.team_id)
+
+    # 3) 查询团队信息（用于着色）
+    teams_info: dict[int, dict] = {}
+    if effective_team_ids:
+        teams_result = await db.execute(
+            select(BizTeam).where(BizTeam.id.in_(effective_team_ids))
+        )
+        for t in teams_result.scalars().all():
+            teams_info[t.id] = {
+                "id": str(t.id),
+                "name": t.name,
+                "color": _team_color(t.id, t.color),
+            }
+
+    # 4) 构建任务列表
+    change_ids = [c.id for c in changes]
+    tasks = []
+    for c in changes:
+        team_info = teams_info.get(c.team_id) if c.team_id else None
+
+        # end_date 暂时与 start_date 相同（后续可增加预计结束时间字段）
+        start_date_str = c.created_at.strftime("%Y-%m-%d") if c.created_at else start_date
+
+        tasks.append({
+            "id": str(c.id),
+            "content": c.content or "",
+            "start_date": start_date_str,
+            "end_date": start_date_str,  # 暂无结束时间字段，与开始相同
+            "team_id": str(c.team_id) if c.team_id else None,
+            "team_name": team_info["name"] if team_info else None,
+            "team_color": team_info["color"] if team_info else None,
+            "change_type": c.change_type.value if hasattr(c.change_type, "value") else c.change_type,
+            "status": c.status.value if hasattr(c.status, "value") else c.status,
+        })
+
+    # 5) 查询这些变更之间的依赖关系
+    dependencies = []
+    if change_ids:
+        deps_result = await db.execute(
+            select(BizChangeDependency).where(
+                BizChangeDependency.from_change_id.in_(change_ids),
+                BizChangeDependency.to_change_id.in_(change_ids),
+            )
+        )
+        for dep in deps_result.scalars().all():
+            dependencies.append({
+                "id": str(dep.id),
+                "from_id": str(dep.from_change_id),
+                "to_id": str(dep.to_change_id),
+                "type": dep.dependency_type,
+            })
+
+    return Response.ok({
+        "tasks": tasks,
+        "dependencies": dependencies,
     })
