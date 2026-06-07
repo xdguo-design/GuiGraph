@@ -28,7 +28,7 @@
         <el-card>
           <template #header>头像设置</template>
           <div class="avatar-section">
-            <el-avatar :size="120" :src="form.avatar_url">
+            <el-avatar :size="120" :src="form.avatar_url || '/uploads/avatars/default-avatar.svg'" @error="handleAvatarError">
               {{ form.username?.charAt(0)?.toUpperCase() }}
             </el-avatar>
             <div class="avatar-actions">
@@ -120,6 +120,11 @@ const wechatQr = reactive<{ mode: string; tip: string; qr_url: string }>({
   tip: '',
   qr_url: '',
 })
+
+// 头像加载失败时回退到默认头像
+function handleAvatarError() {
+  return '/uploads/avatars/default-avatar.svg'
+}
 
 onMounted(async () => {
   await loadUserInfo()

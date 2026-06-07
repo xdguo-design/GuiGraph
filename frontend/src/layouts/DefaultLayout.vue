@@ -15,38 +15,12 @@
           class="brand-menu"
           router
         >
-          <el-menu-item index="/kanban">
-            <el-icon><DataLine /></el-icon>
-            <template #title>个人/团队看板</template>
-          </el-menu-item>
-          <el-menu-item index="/dashboard">
-            <el-icon><House /></el-icon>
-            <template #title>仪表盘</template>
-          </el-menu-item>
-          <el-menu-item index="/changes">
-            <el-icon><Document /></el-icon>
-            <template #title>变更管理</template>
-          </el-menu-item>
-          <el-menu-item index="/org">
-            <el-icon><OfficeBuilding /></el-icon>
-            <template #title>组织架构</template>
-          </el-menu-item>
-          <el-menu-item index="/git">
-            <el-icon><Link /></el-icon>
-            <template #title>Git 仓库</template>
-          </el-menu-item>
-          <el-menu-item index="/jenkins">
-            <el-icon><Cpu /></el-icon>
-            <template #title>Jenkins</template>
-          </el-menu-item>
-          <el-menu-item v-if="isAdmin" index="/applications">
-            <el-icon><UserFilled /></el-icon>
-            <template #title>账号审核</template>
-          </el-menu-item>
-          <el-menu-item v-if="isAdmin" index="/demo-data">
-            <el-icon><MagicStick /></el-icon>
-            <template #title>演示数据</template>
-          </el-menu-item>
+          <template v-for="item in visibleMenuItems" :key="item.path">
+            <el-menu-item :index="item.path">
+              <el-icon><component :is="item.icon" /></el-icon>
+              <template #title>{{ item.label }}</template>
+            </el-menu-item>
+          </template>
         </el-menu>
         <div v-if="!sidebarCollapsed" class="sidebar-footer">© {{ year }} GuiGraph</div>
       </el-aside>
@@ -65,8 +39,9 @@
                 <span class="user-info">
                   <el-avatar
                     :size="34"
-                    :src="userInfo?.avatar_url || ''"
+                    :src="userInfo?.avatar_url || '/uploads/avatars/default-avatar.svg'"
                     class="user-avatar"
+                    @error="handleAvatarError"
                   >
                     {{ avatarInitial }}
                   </el-avatar>
@@ -102,6 +77,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { userAPI } from '@/api/user'
+import { usePermission } from '@/composables/usePermission'
 // 显式导入图标，避免 Vue 组件解析警告
 import {
   Histogram,
@@ -116,6 +92,14 @@ import {
   MagicStick,
   CaretBottom,
   SwitchButton,
+  Tickets,
+  Clock,
+  Grid,
+  Search,
+  Management,
+  SetUp,
+  Files,
+  Reading,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -124,11 +108,53 @@ const authStore = useAuthStore()
 const appStore = useAppStore()
 
 const { sidebarCollapsed, toggleSidebar, theme, setTheme } = appStore
-const { userInfo, logout, role, setUserInfo } = authStore
+const { userInfo, logout, setUserInfo } = authStore
+const { hasResourceAccess, hasRoleAccess } = usePermission()
 
-const isAdmin = computed(() => role.value === 'admin' || role.value === 'system_admin')
 const activeMenu = computed(() => route.path)
 const year = computed(() => new Date().getFullYear())
+
+// ── 菜单定义（统一数据源，权限集中控制） ──
+interface MenuItem {
+  path: string
+  icon: any
+  label: string
+  /** 权限资源名：有此资源任意操作权限才显示 */
+  resource?: string
+  /** 角色白名单：匹配任意角色才显示 */
+  requiredRole?: string[]
+}
+
+const allMenuItems: MenuItem[] = [
+  { path: '/kanban', icon: DataLine, label: '个人/团队看板', resource: 'change' },
+  { path: '/dashboard', icon: House, label: '仪表盘', resource: 'change' },
+  { path: '/changes', icon: Document, label: '变更管理', resource: 'change' },
+  { path: '/org', icon: OfficeBuilding, label: '组织架构', resource: 'org' },
+  { path: '/git', icon: Link, label: 'Git 仓库', resource: 'git' },
+  { path: '/jenkins', icon: Cpu, label: 'Jenkins', resource: 'jenkins' },
+  { path: '/version-merge', icon: Files, label: '版本合并', resource: 'git' },
+  { path: '/upgrades', icon: Reading, label: '升级日志', resource: 'upgrade' },
+  { path: '/applications', icon: UserFilled, label: '账号审核', requiredRole: ['system_admin', 'dept_admin', 'team_admin'] },
+  { path: '/demo-data', icon: MagicStick, label: '演示数据', requiredRole: ['system_admin', 'dept_admin', 'team_admin'] },
+  { path: '/ai-research', icon: Search, label: 'AI 智能检索', resource: 'ai' },
+  { path: '/permissions', icon: Grid, label: '权限矩阵', requiredRole: ['system_admin', 'dept_admin'] },
+  { path: '/knowledge', icon: Tickets, label: '知识库笔记' },
+  { path: '/audit-logs', icon: Clock, label: '审计日志', resource: 'audit' },
+  { path: '/business-line', icon: Management, label: '业务线', requiredRole: ['system_admin', 'dept_admin', 'team_admin'] },
+  { path: '/product-line', icon: SetUp, label: '产品线', requiredRole: ['system_admin', 'dept_admin', 'team_admin'] },
+]
+
+/** 根据权限过滤后的可见菜单 */
+const visibleMenuItems = computed(() => {
+  return allMenuItems.filter((item) => {
+    // 资源级权限检查
+    if (item.resource) return hasResourceAccess(item.resource)
+    // 角色级权限检查
+    if (item.requiredRole) return hasRoleAccess(item.requiredRole)
+    // 无权限要求：所有认证用户可见
+    return true
+  })
+})
 
 // 主题显示
 const THEME_LABELS: Record<string, string> = {
@@ -149,6 +175,11 @@ const avatarInitial = computed(() => {
   const src = userInfo.value?.nickname || userInfo.value?.username || 'U'
   return src.charAt(0).toUpperCase()
 })
+
+// 头像加载失败时回退到默认头像
+function handleAvatarError() {
+  return '/uploads/avatars/default-avatar.svg'
+}
 
 // 进入页面时若缺少头像/昵称，主动拉取一次资料
 onMounted(async () => {

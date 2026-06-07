@@ -54,6 +54,9 @@ async def get_profile(
     # 如果是相对路径，补全为可访问 URL
     if avatar_url and not avatar_url.startswith(("http://", "https://", "/")):
         avatar_url = f"{_public_base_url()}/{avatar_url}"
+    # 没有头像时返回默认头像
+    elif not avatar_url:
+        avatar_url = f"{_public_base_url()}/default-avatar.svg"
 
     return Response.ok(
         {
