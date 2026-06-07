@@ -137,6 +137,7 @@ const allMenuItems: MenuItem[] = [
   { path: '/applications', icon: UserFilled, label: '账号审核', requiredRole: ['system_admin', 'dept_admin', 'team_admin'] },
   { path: '/demo-data', icon: MagicStick, label: '演示数据', requiredRole: ['system_admin', 'dept_admin', 'team_admin'] },
   { path: '/ai-research', icon: Search, label: 'AI 智能检索', resource: 'ai' },
+  { path: '/ai-models', icon: SetUp, label: 'AI 模型管理', requiredRole: ['system_admin'] },
   { path: '/permissions', icon: Grid, label: '权限矩阵', requiredRole: ['system_admin', 'dept_admin'] },
   { path: '/knowledge', icon: Tickets, label: '知识库笔记' },
   { path: '/audit-logs', icon: Clock, label: '审计日志', resource: 'audit' },

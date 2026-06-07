@@ -13,12 +13,31 @@ export const aiAPI = {
     request.post('/ai/generate/summary', { content }),
 
   // ── 模型管理 ──
-  listModels: () => request.get('/ai/models'),
+  listModels: (tier?: string) =>
+    request.get('/ai/models', { params: tier ? { tier } : {} }),
   createModel: (data: any) => request.post('/ai/models', data),
-  updateModel: (modelId: number, data: any) =>
+  updateModel: (modelId: number | string, data: any) =>
     request.put(`/ai/models/${modelId}`, data),
-  deleteModel: (modelId: number) =>
+  deleteModel: (modelId: number | string) =>
     request.delete(`/ai/models/${modelId}`),
+
+  // ── 场景绑定 ──
+  listScenarios: () => request.get('/ai/models/scenarios'),
+  createScenario: (data: any) => request.post('/ai/models/scenarios', data),
+  updateScenario: (bindingId: number | string, data: any) =>
+    request.put(`/ai/models/scenarios/${bindingId}`, data),
+  deleteScenario: (bindingId: number | string) =>
+    request.delete(`/ai/models/scenarios/${bindingId}`),
+
+  // ── Prompt 模板 ──
+  listPrompts: () => request.get('/ai/models/prompts'),
+  createPrompt: (data: any) => request.post('/ai/models/prompts', data),
+  updatePrompt: (templateId: number | string, data: any) =>
+    request.put(`/ai/models/prompts/${templateId}`, data),
+
+  // ── 用量统计 ──
+  getUsage: () => request.get('/ai/models/usage'),
+  getUsageLogs: (limit = 50) => request.get('/ai/models/usage/logs', { params: { limit } }),
 
   // ── Skill 管理 ──
   listSkills: () => request.get('/ai/skills'),

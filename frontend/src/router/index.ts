@@ -129,6 +129,13 @@ const routes = [
         component: () => import('@/pages/ai/Research.vue'),
         meta: { title: 'AI 智能检索', requiresAuth: true, requiresRole: ['admin', 'editor', 'viewer'] },
       },
+      // ── AI 模型管理 (管理员) ──
+      {
+        path: 'ai-models',
+        name: 'AIModels',
+        component: () => import('@/pages/ai/ModelManagement.vue'),
+        meta: { title: 'AI 模型管理', requiresAuth: true, requiresRole: ['admin'] },
+      },
       // ── 权限矩阵 (P0) ──
       {
         path: 'permissions',
